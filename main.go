@@ -4,22 +4,16 @@ import (
 	"github.com/codegangsta/cli"
 	"log"
 	"os"
-
-	/* object mapper - path dereference */
-	//"encoding/json"
-
-	/* object mapper */
-	"net/http"
-
 	"strings"
 
 	"io/ioutil"
+	"net/http"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "iopipe"
-	app.Usage = "API cat - the API rosetta stone"
+	app.Usage = "cross-API interoperability & data manager"
 	app.Action = func(c *cli.Context) {
 		println("object object")
 	}
@@ -187,17 +181,12 @@ type ObjPath struct {
 	query  []string
 }
 
-/*
-Create a canonicial URL from ObjPath
-*/
+// Create a canonicial URL from ObjPath
 func (path *ObjPath) canonicial() string {
-	//return path.scheme + "://" + path.host + "/" + path.uri
 	return "https://" + path.host + "/" + path.uri
 }
 
-/*
-Create an ObjPath from a string
-*/
+// Create an ObjPath from a string
 func dereferencePath(reqPath string) *ObjPath {
 	path := new(ObjPath)
 	parts := strings.SplitN(reqPath, "/", 2)
@@ -207,10 +196,8 @@ func dereferencePath(reqPath string) *ObjPath {
 	return path
 }
 
-/*
-Download resource at path &
-validate resource matches declared object type definition.
-*/
+// Download resource at path &
+// validate resource matches declared object type definition.
 func dereferenceObj(path *ObjPath) *Object {
 	/*rawObj := json.Decode... into MetaObject
 	return rawObj*/
