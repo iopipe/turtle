@@ -8,6 +8,7 @@ import (
 
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 func main() {
@@ -137,12 +138,13 @@ type MetaObject struct {
 }
 
 type Object struct {
-	path *ObjPath
+	path *url.URL
 }
 
 func (object *Object) read() string {
-	url := object.path.canonicial()
-	res, err := http.Get(url)
+	path := object.path.String()
+	object.path.String()
+	res, err := http.Get(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -155,9 +157,9 @@ func (object *Object) read() string {
 }
 
 func (object *Object) update(content string) string {
-	url := object.path.canonicial()
+	path := object.path.String()
 	reader := strings.NewReader(content)
-	req, err := http.NewRequest("PUT", url, reader)
+	req, err := http.NewRequest("PUT", path, reader)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -181,24 +183,21 @@ type ObjPath struct {
 	query  []string
 }
 
-// Create a canonicial URL from ObjPath
-func (path *ObjPath) canonicial() string {
-	return "https://" + path.host + "/" + path.uri
-}
-
 // Create an ObjPath from a string
-func dereferencePath(reqPath string) *ObjPath {
-	path := new(ObjPath)
-	parts := strings.SplitN(reqPath, "/", 2)
-	path.host = parts[0]
-	path.scheme = "https"
-	path.uri = parts[1]
+func dereferencePath(reqPath string) *url.URL {
+	path, err := url.Parse(reqPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if path.Scheme == "" {
+		path.Scheme = "https"
+	}
 	return path
 }
 
 // Download resource at path &
 // validate resource matches declared object type definition.
-func dereferenceObj(path *ObjPath) *Object {
+func dereferenceObj(path *url.URL) *Object {
 	/*rawObj := json.Decode... into MetaObject
 	return rawObj*/
 	obj := new(Object)
