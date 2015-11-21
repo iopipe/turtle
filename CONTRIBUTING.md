@@ -6,6 +6,9 @@ General rules:
 * Collaborate and be friendly (and follow community guidelines)
 * Sign your code!
 
+It's not a rule, but it's also recommended to drop into #iopipe on
+irc.freenode.org.
+
 # Submit pull requests
 
 Simply fork our repository on GitHub, then use the GitHub pull request feature.
