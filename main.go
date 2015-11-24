@@ -159,20 +159,17 @@ func (object *Object) read() string {
 func (object *Object) update(content string) string {
 	path := object.path.String()
 	reader := strings.NewReader(content)
-	req, err := http.NewRequest("PUT", path, reader)
+
+	res, err := http.Post(path, "application/json", reader)
+	defer res.Body.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	res.Body.Close()
 	return string(body[:])
 }
 
