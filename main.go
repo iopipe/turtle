@@ -117,7 +117,67 @@ func cmdFetch(c *cli.Context) {
 	fromObj := dereferenceObj(fromPath)
 
 	msg := fromObj.read()
+	println("Raw msg:")
 	println(msg)
+}
+
+// Handle the 'fetch' CLI command.
+func cmdConvert(c *cli.Context) {
+	println("Fetching ", c.Args().First())
+	fromPath := dereferencePath(c.Args().First())
+	fromObj := dereferenceObj(fromPath)
+
+	msg := fromObj.read()
+	println("Raw msg:")
+	println(msg)
+
+	toObjType := "Message"
+	println("Converting to: " + toObjType)
+
+	filter := findFilter(fromObjType, toObjType)
+	filter.run(msg)
+}
+
+type filterTuple struct {
+	fromObjType string
+	toObjType   string
+}
+
+func findFilter(fromObjType string, toObjType string) func(msg string) string {
+	var m map[filterTuple]func(msg string) string
+
+	/* Filter definitions */
+	m[filterTuple{
+		fromObjType: "com.iopipe.messaging.GenericMessage",
+		toObjType:   "com.twitter.statusMessage",
+	}] = func(msg string) string {
+		// return msg
+		object := JSON.decode(msg)
+		// Expects a twitterMessage outputs a GenericMessage
+		tweet := object.properties
+		statusMessage := map[string]int{
+			id:   config.url + "/objects/statusMessage/" + tweet.id,
+			user: config.url + "/objects/user/" + tweet.user.id,
+			text: tweet.text,
+		}
+		return JSON.encode(statusMessage)
+	}
+
+	m[filterTuple{
+		fromObjType: "com.twiter.statusRequest",
+		toObjType:   "com.iopipe.messaging.GenericMessage",
+	}] = func(msg string) string {
+		// Expects a genericMessage outputs a TwitterStatusRequest
+		genericMessage := JSON.decode(msg)
+		statusRequest := map[string]int{
+			status: msg.text,
+		}
+		return JSON.encode(statusRequest)
+	}
+
+	fT := filterTuple{fromObjType: fromObjType, toObjType: toObjType}
+	filterFunc := m[fT]
+	return filterFunc
 }
 
 // Handle the 'exec' CLI commmand.
