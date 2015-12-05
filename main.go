@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -36,6 +37,11 @@ func main() {
 			Name:   "copy",
 			Usage:  "Copy or pipe from <src> to <dest>",
 			Action: cmdCopy,
+		},
+		{
+			Name:   "convert",
+			Usage:  "Pipe from <src> to stdout",
+			Action: cmdConvert,
 		},
 		{
 			Name:   "fetch",
@@ -121,6 +127,11 @@ func cmdFetch(c *cli.Context) {
 	println(msg)
 }
 
+type objectInterface struct {
+	ClassID    string                 `json:"classid"`
+	Properties map[string]interface{} `json:"properties"`
+}
+
 // Handle the 'fetch' CLI command.
 func cmdConvert(c *cli.Context) {
 	println("Fetching ", c.Args().First())
@@ -131,11 +142,15 @@ func cmdConvert(c *cli.Context) {
 	println("Raw msg:")
 	println(msg)
 
-	toObjType := "Message"
+	toObjType := "com.twitter.statusMessage"
 	println("Converting to: " + toObjType)
 
+	var obj objectInterface
+	json.Unmarshal([]byte(msg), &obj)
+	fromObjType := obj.ClassID
 	filter := findFilter(fromObjType, toObjType)
-	filter.run(msg)
+	//filter(msg)
+	filter(obj)
 }
 
 type filterTuple struct {
@@ -143,36 +158,35 @@ type filterTuple struct {
 	toObjType   string
 }
 
-func findFilter(fromObjType string, toObjType string) func(msg string) string {
-	var m map[filterTuple]func(msg string) string
+func findFilter(fromObjType string, toObjType string) func(obj objectInterface) (string, error) {
+	var m map[filterTuple]func(obj objectInterface) (string, error)
 
 	/* Filter definitions */
 	m[filterTuple{
 		fromObjType: "com.iopipe.messaging.GenericMessage",
 		toObjType:   "com.twitter.statusMessage",
-	}] = func(msg string) string {
-		// return msg
-		object := JSON.decode(msg)
+	}] = func(obj objectInterface) (string, error) {
 		// Expects a twitterMessage outputs a GenericMessage
-		tweet := object.properties
-		statusMessage := map[string]int{
-			id:   config.url + "/objects/statusMessage/" + tweet.id,
-			user: config.url + "/objects/user/" + tweet.user.id,
-			text: tweet.text,
+		tweet := obj.Properties
+		statusMessage := map[string]string{
+			"id":   "/objects/statusMessage/" + tweet["id"].(string),
+			"user": "/objects/user/" + tweet["user"].(map[string]interface{})["id"].(string),
+			"text": tweet["text"].(string),
 		}
-		return JSON.encode(statusMessage)
+		b, err := json.Marshal(&statusMessage)
+		return string(b), err
 	}
 
 	m[filterTuple{
 		fromObjType: "com.twiter.statusRequest",
 		toObjType:   "com.iopipe.messaging.GenericMessage",
-	}] = func(msg string) string {
+	}] = func(obj objectInterface) (string, error) {
 		// Expects a genericMessage outputs a TwitterStatusRequest
-		genericMessage := JSON.decode(msg)
-		statusRequest := map[string]int{
-			status: msg.text,
+		statusRequest := map[string]string{
+			"status": obj.Properties["text"].(string),
 		}
-		return JSON.encode(statusRequest)
+		b, err := json.Marshal(&statusRequest)
+		return string(b), err
 	}
 
 	fT := filterTuple{fromObjType: fromObjType, toObjType: toObjType}
