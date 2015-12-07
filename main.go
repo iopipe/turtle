@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/codegangsta/cli"
+	"github.com/robertkrimen/otto"
 
 	"errors"
 	"log"
@@ -177,15 +178,18 @@ type filterTuple struct {
 }
 
 func findFilter(fromObjType string, toObjType string) (func(obj objectInterface) (string, error), error) {
+	var script string
+
 	fT := filterTuple{fromObjType: fromObjType, toObjType: toObjType}
 
 	//var m map[filterTuple]func(obj objectInterface) (string, error)
-
 	/* Filter definitions */
-	if (fT == filterTuple{
-		fromObjType:   "com.twitter.statusMessage",
-		toObjType: "com.iopipe.messaging.GenericMessage",
-	}) {
+	switch fT {
+	case filterTuple{
+		fromObjType: "com.twitter.statusMessage",
+		toObjType:   "com.iopipe.messaging.GenericMessage",
+	}:
+		script = `
 		return func(obj objectInterface) (string, error) {
 			// Expects a twitterMessage outputs a GenericMessage
 			tweet := obj.Properties
@@ -197,24 +201,34 @@ func findFilter(fromObjType string, toObjType string) (func(obj objectInterface)
 			b, err := json.Marshal(&statusMessage)
 			return string(b), err
 		}, nil
-	}
-
-	if (fT == filterTuple{
+		`
+	case filterTuple{
 		fromObjType: "com.twiter.statusRequest",
 		toObjType:   "com.iopipe.messaging.GenericMessage",
-	}) {
-		return func(obj objectInterface) (string, error) {
-			// Expects a genericMessage outputs a TwitterStatusRequest
-			statusRequest := map[string]string{
-				"status": obj.Properties["text"].(string),
-			}
-			b, err := json.Marshal(&statusRequest)
-			return string(b), err
-		}, nil
+	}:
+		script = `
+			return func(obj objectInterface) (string, error) {
+				// Expects a genericMessage outputs a TwitterStatusRequest
+				statusRequest := map[string]string{
+					"status": obj.Properties["text"].(string),
+				}
+				b, err := json.Marshal(&statusRequest)
+				return string(b), err
+			}, nil
+		`
+	default:
+		return nil, errors.New("No filter found.")
 	}
-	//filterFunc := m[fT]
-	//return filterFunc
-	return nil, errors.New("No filter found.")
+
+	return func(obj objectInterface) (string, error) {
+		vm := otto.New()
+		val, err := vm.Run(script)
+		if err != nil {
+			return "", err
+		}
+		return val.ToString()
+	}, nil
+
 }
 
 // Handle the 'exec' CLI commmand.
