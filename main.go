@@ -104,8 +104,6 @@ func cmdCopy(c *cli.Context) {
 	fromPath := dereferencePath(c.Args().First())
 	fromObj := dereferenceObj(fromPath)
 
-	//obj := from.read()
-	//dest.update(obj)
 	msg := fromObj.read()
 
 	println("Sending to ", c.Args().Get(1))
@@ -148,7 +146,6 @@ func cmdConvert(c *cli.Context) {
 	println(msg)
 
 	toObjType := c.Args().Get(1)
-	//toObjType := "com.iopipe.messaging.GenericMessage"
 	println("Converting to: " + toObjType)
 
 	var obj objectInterface
@@ -163,7 +160,6 @@ func cmdConvert(c *cli.Context) {
 		log.Fatal(err)
 		return
 	}
-	//filter(msg)
 	resp, err := filter(msg)
 	if err != nil {
 		log.Fatal(err)
@@ -182,7 +178,6 @@ func findFilter(fromObjType string, toObjType string) (func(input string) (strin
 
 	fT := filterTuple{fromObjType: fromObjType, toObjType: toObjType}
 
-	//var m map[filterTuple]func(obj objectInterface) (string, error)
 	/* Filter definitions */
 	switch fT {
 	case filterTuple{
@@ -302,8 +297,6 @@ func dereferencePath(reqPath string) *url.URL {
 // Download resource at path &
 // validate resource matches declared object type definition.
 func dereferenceObj(path *url.URL) *Object {
-	/*rawObj := json.Decode... into MetaObject
-	return rawObj*/
 	obj := new(Object)
 	obj.path = path
 	return obj
