@@ -164,7 +164,7 @@ func cmdConvert(c *cli.Context) {
 		return
 	}
 	//filter(msg)
-	resp, err := filter(obj)
+	resp, err := filter(msg)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -177,7 +177,7 @@ type filterTuple struct {
 	toObjType   string
 }
 
-func findFilter(fromObjType string, toObjType string) (func(obj objectInterface) (string, error), error) {
+func findFilter(fromObjType string, toObjType string) (func(input string) (string, error), error) {
 	var script string
 
 	fT := filterTuple{fromObjType: fromObjType, toObjType: toObjType}
@@ -190,38 +190,34 @@ func findFilter(fromObjType string, toObjType string) (func(obj objectInterface)
 		toObjType:   "com.iopipe.messaging.GenericMessage",
 	}:
 		script = `
-		return func(obj objectInterface) (string, error) {
-			// Expects a twitterMessage outputs a GenericMessage
-			tweet := obj.Properties
-			statusMessage := map[string]string{
-				"id":   "/objects/statusMessage/" + tweet["id_str"].(string),
-				"user": "/objects/user/" + tweet["user"].(map[string]interface{})["id_str"].(string),
-				"text": tweet["text"].(string),
-			}
-			b, err := json.Marshal(&statusMessage)
-			return string(b), err
-		}, nil
+			var obj = JSON.parse(input);
+			var tweet = obj["properties"];
+			var statusMessage = {
+				"id":   "/objects/statusMessage/" + tweet["id_str"],
+				"user": "/objects/user/" + tweet["user"]["id_str"],
+				"text": tweet["text"]
+			};
+			JSON.stringify(statusMessage);
 		`
 	case filterTuple{
 		fromObjType: "com.twiter.statusRequest",
 		toObjType:   "com.iopipe.messaging.GenericMessage",
 	}:
 		script = `
-			return func(obj objectInterface) (string, error) {
-				// Expects a genericMessage outputs a TwitterStatusRequest
-				statusRequest := map[string]string{
-					"status": obj.Properties["text"].(string),
-				}
-				b, err := json.Marshal(&statusRequest)
-				return string(b), err
-			}, nil
+			var obj = JSON.parse(input);
+			var statusRequest = {
+				"status": obj["properties"]["text"]
+			};
+			JSON.stringify(statusRequest);
 		`
 	default:
 		return nil, errors.New("No filter found.")
 	}
 
-	return func(obj objectInterface) (string, error) {
+	return func(input string) (string, error) {
 		vm := otto.New()
+		vm.Set("input", input)
+		println("Executing script: " + script)
 		val, err := vm.Run(script)
 		if err != nil {
 			return "", err
