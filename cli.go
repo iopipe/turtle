@@ -2,17 +2,11 @@ package main
 
 import (
 	"github.com/codegangsta/cli"
-	"github.com/robertkrimen/otto"
 
-	"errors"
 	"log"
 	"os"
-	"strings"
 
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"net/url"
 )
 
 func main() {
@@ -128,11 +122,6 @@ func cmdFetch(c *cli.Context) {
 	println(msg)
 }
 
-type objectInterface struct {
-	ClassID    string                 `json:"classid"`
-	Properties map[string]interface{} `json:"properties"`
-}
-
 // Handle the 'fetch' CLI command.
 func cmdConvert(c *cli.Context) {
 	var err error
@@ -168,60 +157,6 @@ func cmdConvert(c *cli.Context) {
 	println("Conversion: " + resp)
 }
 
-type filterTuple struct {
-	fromObjType string
-	toObjType   string
-}
-
-func findFilter(fromObjType string, toObjType string) (func(input string) (string, error), error) {
-	var script string
-
-	fT := filterTuple{fromObjType: fromObjType, toObjType: toObjType}
-
-	/* Filter definitions */
-	switch fT {
-	case filterTuple{
-		fromObjType: "com.twitter.statusMessage",
-		toObjType:   "com.iopipe.messaging.GenericMessage",
-	}:
-		script = `
-			var obj = JSON.parse(input);
-			var tweet = obj["properties"];
-			var statusMessage = {
-				"id":   "/objects/statusMessage/" + tweet["id_str"],
-				"user": "/objects/user/" + tweet["user"]["id_str"],
-				"text": tweet["text"]
-			};
-			JSON.stringify(statusMessage);
-		`
-	case filterTuple{
-		fromObjType: "com.twiter.statusRequest",
-		toObjType:   "com.iopipe.messaging.GenericMessage",
-	}:
-		script = `
-			var obj = JSON.parse(input);
-			var statusRequest = {
-				"status": obj["properties"]["text"]
-			};
-			JSON.stringify(statusRequest);
-		`
-	default:
-		return nil, errors.New("No filter found.")
-	}
-
-	return func(input string) (string, error) {
-		vm := otto.New()
-		vm.Set("input", input)
-		println("Executing script: " + script)
-		val, err := vm.Run(script)
-		if err != nil {
-			return "", err
-		}
-		return val.ToString()
-	}, nil
-
-}
-
 // Handle the 'exec' CLI commmand.
 func cmdExec(c *cli.Context) {
 	println("Executing action ", c.Args().First())
@@ -230,74 +165,4 @@ func cmdExec(c *cli.Context) {
 // Handle the 'create' CLI command.
 func cmdCreate(c *cli.Context) {
 	println("Creating object ", c.Args().First())
-}
-
-/*******************************************************
- Object Mapper
-*******************************************************/
-type MetaObject struct {
-	objtype []string
-}
-
-type Object struct {
-	path *url.URL
-}
-
-func (object *Object) read() string {
-	path := object.path.String()
-	object.path.String()
-	res, err := http.Get(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	res.Body.Close()
-	return string(body[:])
-}
-
-func (object *Object) update(content string) string {
-	path := object.path.String()
-	reader := strings.NewReader(content)
-
-	res, err := http.Post(path, "application/json", reader)
-	defer res.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(body[:])
-}
-
-type ObjPath struct {
-	host   string
-	scheme string
-	uri    string
-	query  []string
-}
-
-// Create an ObjPath from a string
-func dereferencePath(reqPath string) *url.URL {
-	path, err := url.Parse(reqPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if path.Scheme == "" {
-		path.Scheme = "https"
-	}
-	return path
-}
-
-// Download resource at path &
-// validate resource matches declared object type definition.
-func dereferenceObj(path *url.URL) *Object {
-	obj := new(Object)
-	obj.path = path
-	return obj
 }
