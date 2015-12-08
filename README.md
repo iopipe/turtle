@@ -43,6 +43,22 @@ also intended, but are not yet integrated.
 
 
 ---------------------------------------
+Filters & Pipescript
+---------------------------------------
+
+Requests and responses and translated using filters written in
+Pipescript (i.e. Javascript) or offered as web services.
+
+All filters simply receive request or response data and output
+translated request or response data. Pipescript is typically operated
+upon locally in the client, whereas web-service based filters operate
+server-side. Pipescript may also be used to build serverside filters
+and applications.
+
+For writing filters see:
+***https://github.com/ewindisch/iopipe/blob/master/docs/pipescript.md***
+
+---------------------------------------
 Build & Install from source
 ---------------------------------------
 
