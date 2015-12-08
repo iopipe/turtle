@@ -41,6 +41,26 @@ know about Dogs.
 Pipes from and into the command-line's STDIN/STDOUT are
 also intended, but are not yet integrated.
 
+
+---------------------------------------
+Build & Install from source
+---------------------------------------
+
+With a functioning golang 1.5 development environment:
+
+```bash
+$ go build
+$ ./iopipe --help
+```
+
+Alternatively use Docker to build & deploy:
+
+```bash
+$ docker build -t iopipe-dev .
+$ eval $(echo "alias iopipe='docker run --rm -it iopipe-dev'" | tee -a ~/.bashrc)
+$ iopipe --help
+```
+
 ---------------------------------------
 Project goals
 ---------------------------------------
