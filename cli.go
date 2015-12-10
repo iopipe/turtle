@@ -3,10 +3,13 @@ package main
 import (
 	"github.com/codegangsta/cli"
 
+	"fmt"
 	"log"
 	"os"
 
 	"encoding/json"
+	"io/ioutil"
+	"net/url"
 )
 
 func main() {
@@ -36,9 +39,9 @@ func main() {
 			Action: cmdCopy,
 		},
 		{
-			Name:   "convert",
+			Name:   "exec",
 			Usage:  "Pipe from <src> to stdout",
-			Action: cmdConvert,
+			Action: cmdExec,
 		},
 		{
 			Name:   "fetch",
@@ -63,11 +66,6 @@ func main() {
 			Action: func(c *cli.Context) {
 				println("Creating ", c.Args().First())
 			},
-		},
-		{
-			Name:   "exec",
-			Usage:  "Perform a registered Action.",
-			Action: cmdExec,
 		},
 	}
 	app.Run(os.Args)
@@ -122,44 +120,72 @@ func cmdFetch(c *cli.Context) {
 	println(msg)
 }
 
-// Handle the 'fetch' CLI command.
-func cmdConvert(c *cli.Context) {
-	var err error
-
-	println("Fetching ", c.Args().First())
-	fromPath := dereferencePath(c.Args().First())
-	fromObj := dereferenceObj(fromPath)
-
-	msg := fromObj.read()
-	println("Raw msg:")
-	println(msg)
-
-	toObjType := c.Args().Get(1)
-	println("Converting to: " + toObjType)
-
-	var obj objectInterface
-	if err = json.Unmarshal([]byte(msg), &obj); err != nil {
-		log.Fatal(err)
-		return
-	}
-	fromObjType := obj.ClassID
-	println("Converting from: " + fromObjType)
-	filter, err := findFilter(fromObjType, toObjType)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	resp, err := filter(msg)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	println("Conversion: " + resp)
-}
-
-// Handle the 'exec' CLI commmand.
+// Handle the 'exec' CLI command.
 func cmdExec(c *cli.Context) {
-	println("Executing action ", c.Args().First())
+	//var err error
+	var lastObj string
+
+	for i := 0; i < len(c.Args()); i++ {
+		apart := c.Args()[i]
+		println("Deconstructing ", apart)
+		var msg string
+
+		path, err := url.Parse(apart)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if path.Scheme == "http" || path.Scheme == "https" {
+			println("From HTTP")
+			argPath := dereferencePath(apart)
+			argObj := dereferenceObj(argPath)
+			// If first argument, then we must GET,
+			// note that this case follows the '-' so all
+			// shell input will pipe into the POST.
+			if (i == 0) {
+				msg = argObj.read()
+			} else {
+				msg = argObj.update(lastObj)
+			}
+		} else if apart == "-" {
+			println("From STDIN")
+			bytes, err := ioutil.ReadAll(os.Stdin)
+			if err != nil {
+				log.Fatal(err)
+			}
+			msg = string(bytes[:])
+		} else {
+			println("via default")
+			toObjType := apart
+
+			var obj objectInterface
+			if err = json.Unmarshal([]byte(lastObj), &obj); err != nil {
+				log.Fatal(err)
+				return
+			}
+			lastObjType := obj.ClassID
+
+			fmt.Printf("pipe[%i][lastObjType/toObjType]: %s/%s\n", i, lastObjType, toObjType)
+
+			filter, err := findFilter(lastObjType, toObjType)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+			msg, err = filter(lastObj)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+		}
+		fmt.Printf("pipe[%i][raw]: %s\n", i, msg)
+
+		if i == len(c.Args()) {
+			println("output: " + msg)
+			return
+		}
+		lastObj = msg
+	}
 }
 
 // Handle the 'create' CLI command.
