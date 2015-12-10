@@ -19,7 +19,6 @@ func main() {
 	app.Action = func(c *cli.Context) {
 		println("object object")
 	}
-
 	/*******************************************************
 	Commands:
 
@@ -120,59 +119,73 @@ func cmdFetch(c *cli.Context) {
 	println(msg)
 }
 
+func execFilter(lastObj string, toObjType string) (msg string, err error) {
+	var obj objectInterface
+	if err = json.Unmarshal([]byte(lastObj), &obj); err != nil {
+		return "", err
+	}
+	lastObjType := obj.ClassID
+
+	fmt.Printf("pipe[lastObjType/toObjType]: %s/%s\n", lastObjType, toObjType)
+
+	filter, err := findFilter(lastObjType, toObjType)
+	if err != nil {
+		return "", err
+	}
+	return filter(lastObj)
+}
+
 // Handle the 'exec' CLI command.
 func cmdExec(c *cli.Context) {
 	//var err error
 	var lastObj string
 
 	for i := 0; i < len(c.Args()); i++ {
-		apart := c.Args()[i]
-		println("Deconstructing ", apart)
+		arg := c.Args()[i]
+		println("Deconstructing ", arg)
 		var msg string
 
-		path, err := url.Parse(apart)
+		path, err := url.Parse(arg)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if path.Scheme == "http" || path.Scheme == "https" {
 			println("From HTTP")
-			argPath := dereferencePath(apart)
+			argPath := dereferencePath(arg)
 			argObj := dereferenceObj(argPath)
 			// If first argument, then we must GET,
 			// note that this case follows the '-' so all
 			// shell input will pipe into the POST.
-			if (i == 0) {
+			if i == 0 {
 				msg = argObj.read()
 			} else {
 				msg = argObj.update(lastObj)
 			}
-		} else if apart == "-" {
+		} else if arg == "-" {
 			println("From STDIN")
 			bytes, err := ioutil.ReadAll(os.Stdin)
 			if err != nil {
 				log.Fatal(err)
+				return
 			}
-			msg = string(bytes[:])
+			if i == 0 {
+				msg = string(bytes[:])
+			} else {
+				// If not the first argument, then expect pipescript
+				filter, err := makeFilter(string(bytes[:]))
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
+				if msg, err = filter(lastObj); err != nil {
+					log.Fatal(err)
+					return
+				}
+			}
 		} else {
 			println("via default")
-			toObjType := apart
-
-			var obj objectInterface
-			if err = json.Unmarshal([]byte(lastObj), &obj); err != nil {
-				log.Fatal(err)
-				return
-			}
-			lastObjType := obj.ClassID
-
-			fmt.Printf("pipe[%i][lastObjType/toObjType]: %s/%s\n", i, lastObjType, toObjType)
-
-			filter, err := findFilter(lastObjType, toObjType)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			msg, err = filter(lastObj)
+			msg, err = execFilter(lastObj, arg)
 			if err != nil {
 				log.Fatal(err)
 				return

@@ -17,7 +17,7 @@ type filterTuple struct {
 	toObjType   string
 }
 
-func findFilter(fromObjType string, toObjType string) (func(input string) (string, error), error) {
+func makeFilter(script string) (func(input string) (string, error), error) {
 	var (
 		res  *http.Response
 		body []byte
@@ -35,18 +35,6 @@ func findFilter(fromObjType string, toObjType string) (func(input string) (strin
 	res.Body.Close()
 	rjs := string(body[:])
 
-	path := FILTER_BASE + fromObjType + "/" + toObjType
-	res, err = http.Get(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err = ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	res.Body.Close()
-	script := string(body[:])
-
 	return func(input string) (string, error) {
 		vm := otto.New()
 
@@ -61,5 +49,26 @@ func findFilter(fromObjType string, toObjType string) (func(input string) (strin
 		}
 		return val.ToString()
 	}, nil
+}
 
+func findFilter(fromObjType string, toObjType string) (func(input string) (string, error), error) {
+	var (
+		res  *http.Response
+		body []byte
+		err  error
+	)
+
+	path := FILTER_BASE + fromObjType + "/" + toObjType
+	res, err = http.Get(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	res.Body.Close()
+	script := string(body[:])
+
+	return makeFilter(script)
 }

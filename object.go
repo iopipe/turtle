@@ -1,12 +1,12 @@
 package main
 
 import (
-        "log"
-        "strings"
+	"log"
+	"strings"
 
-        "io/ioutil"
-        "net/http"
-        "net/url"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 )
 
 /*******************************************************
@@ -63,4 +63,3 @@ type ObjPath struct {
 	uri    string
 	query  []string
 }
-
