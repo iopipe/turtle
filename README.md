@@ -23,7 +23,7 @@ Usage
 $ iopipe fetch http://localhost/some-request
 
 # Fetch response and convert to an object (to stdout)
-$ iopipe convert http://localhost/some-request com.example.SomeObject
+$ iopipe exec http://localhost/some-request com.example.SomeObject
 
 # Fetch response and pipe into another web service
 $ iopipe copy http://localhost/dogs/spot http://otherhost/dogs/
