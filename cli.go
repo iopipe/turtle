@@ -20,9 +20,6 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "iopipe"
 	app.Usage = "cross-API interoperability & data manager"
-	app.Action = func(c *cli.Context) {
-		logrus.Debug("object object")
-	}
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:        "debug",
