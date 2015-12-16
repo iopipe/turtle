@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/robertkrimen/otto"
+	"github.com/Sirupsen/logrus"
 
 	//"errors"
 	"io/ioutil"
@@ -38,11 +39,11 @@ func makeFilter(script string) (func(input string) (string, error), error) {
 	return func(input string) (string, error) {
 		vm := otto.New()
 
-		println("Adding RequireJS")
+		logrus.Debug("Adding RequireJS")
 		vm.Run(rjs)
 
 		vm.Set("input", input)
-		println("Executing script: " + script)
+		logrus.Debug("Executing script: " + script)
 		val, err := vm.Run(script)
 		if err != nil {
 			return "", err

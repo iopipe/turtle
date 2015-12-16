@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
 	"fmt"
@@ -12,12 +13,27 @@ import (
 	"net/url"
 )
 
+var debug bool = false
+
 func main() {
+	//var debug bool = false
 	app := cli.NewApp()
 	app.Name = "iopipe"
 	app.Usage = "cross-API interoperability & data manager"
 	app.Action = func(c *cli.Context) {
-		println("object object")
+		logrus.Debug("object object")
+	}
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:        "debug",
+			Usage:       "enable debugging output",
+			Destination: &debug,
+		},
+	}
+	app.Action = func(c *cli.Context) {
+		if debug {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
 	}
 	/*******************************************************
 	Commands:
@@ -51,7 +67,7 @@ func main() {
 			Name:  "delete",
 			Usage: "Delete object",
 			Action: func(c *cli.Context) {
-				println("Deleting ", c.Args().First())
+				logrus.Debug("Deleting ", c.Args().First())
 			},
 		},
 		{
@@ -63,7 +79,7 @@ func main() {
 			Name:  "update",
 			Usage: "Update an object, only if it already exists.",
 			Action: func(c *cli.Context) {
-				println("Creating ", c.Args().First())
+				logrus.Debug("Creating ", c.Args().First())
 			},
 		},
 	}
@@ -91,32 +107,32 @@ func main() {
 
 // Handle the 'copy' CLI command.
 func cmdCopy(c *cli.Context) {
-	println("Fetching ", c.Args().First())
+	logrus.Debug("Fetching ", c.Args().First())
 	fromPath := dereferencePath(c.Args().First())
 	fromObj := dereferenceObj(fromPath)
 
 	msg := fromObj.read()
 
-	println("Sending to ", c.Args().Get(1))
-	println("Content: ", msg)
+	logrus.Debug("Sending to ", c.Args().Get(1))
+	logrus.Debug("Content: ", msg)
 
 	destPath := dereferencePath(c.Args().Get(1))
 	destObj := dereferenceObj(destPath)
 
 	response := destObj.update(msg)
 
-	println("Recipient response: ", response)
+	logrus.Debug("Recipient response: ", response)
 }
 
 // Handle the 'fetch' CLI command.
 func cmdFetch(c *cli.Context) {
-	println("Fetching ", c.Args().First())
+	logrus.Debug("Fetching ", c.Args().First())
 	fromPath := dereferencePath(c.Args().First())
 	fromObj := dereferenceObj(fromPath)
 
 	msg := fromObj.read()
-	println("Raw msg:")
-	println(msg)
+	logrus.Debug("Raw msg:")
+	logrus.Debug(msg)
 }
 
 func execFilter(lastObj string, toObjType string) (msg string, err error) {
@@ -126,7 +142,7 @@ func execFilter(lastObj string, toObjType string) (msg string, err error) {
 	}
 	lastObjType := obj.ClassID
 
-	fmt.Printf("pipe[lastObjType/toObjType]: %s/%s\n", lastObjType, toObjType)
+	logrus.Info("pipe[lastObjType/toObjType]: %s/%s\n", lastObjType, toObjType)
 
 	filter, err := findFilter(lastObjType, toObjType)
 	if err != nil {
@@ -137,12 +153,16 @@ func execFilter(lastObj string, toObjType string) (msg string, err error) {
 
 // Handle the 'exec' CLI command.
 func cmdExec(c *cli.Context) {
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	//var err error
 	var lastObj string
 
 	for i := 0; i < len(c.Args()); i++ {
 		arg := c.Args()[i]
-		println("Deconstructing ", arg)
+		logrus.Debug("Deconstructing ", arg)
 		var msg string
 
 		path, err := url.Parse(arg)
@@ -151,9 +171,10 @@ func cmdExec(c *cli.Context) {
 		}
 
 		if path.Scheme == "http" || path.Scheme == "https" {
-			println("From HTTP")
 			argPath := dereferencePath(arg)
 			argObj := dereferenceObj(argPath)
+
+			logrus.Info("pipe[argPath]: " + argPath)
 			// If first argument, then we must GET,
 			// note that this case follows the '-' so all
 			// shell input will pipe into the POST.
@@ -163,7 +184,7 @@ func cmdExec(c *cli.Context) {
 				msg = argObj.update(lastObj)
 			}
 		} else if arg == "-" {
-			println("From STDIN")
+			logrus.Debug("From STDIN")
 			bytes, err := ioutil.ReadAll(os.Stdin)
 			if err != nil {
 				log.Fatal(err)
@@ -184,17 +205,17 @@ func cmdExec(c *cli.Context) {
 				}
 			}
 		} else {
-			println("via default")
+			logrus.Debug("via default")
 			msg, err = execFilter(lastObj, arg)
 			if err != nil {
 				log.Fatal(err)
 				return
 			}
 		}
-		fmt.Printf("pipe[%i][raw]: %s\n", i, msg)
+		logrus.Debug(fmt.Sprintf("pipe[%i][raw]: %s\n", i, msg))
 
 		if i == len(c.Args()) {
-			println("output: " + msg)
+			logrus.Debug("output: " + msg)
 			return
 		}
 		lastObj = msg
@@ -203,5 +224,5 @@ func cmdExec(c *cli.Context) {
 
 // Handle the 'create' CLI command.
 func cmdCreate(c *cli.Context) {
-	println("Creating object ", c.Args().First())
+	logrus.Debug("Creating object ", c.Args().First())
 }
