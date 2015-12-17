@@ -31,24 +31,7 @@ $ iopipe exec http://localhost/some-request com.example.SomeObject \
 # & converting the response into a ResponseObject
 $ iopipe exec http://localhost/some-request com.example.SomeObject \
               http://otherhost/request some.example.ResponseObject
-
-
-# Fetch response and pipe into another web service
-$ iopipe copy http://localhost/dogs/spot http://otherhost/dogs/
 ```
-
-The above commands may be temporary as we create functioning
-piping mechanisms and object conversion tooling. It's intended,
-for example, that 'iopipe copy' will be able to transform a
-response not only into a request, but will be able to transform them.
-
-For instance, copy should be able to turn a "Dog" object into a
-generic "Animal" one, for a receiving service which does not
-know about Dogs.
-
-Pipes from and into the command-line's STDIN/STDOUT are
-also intended, but are not yet integrated.
-
 
 ---------------------------------------
 Filters & Pipescript
