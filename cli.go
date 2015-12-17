@@ -35,7 +35,7 @@ func main() {
 	/*******************************************************
 	Commands:
 
-		Copy   - fetches an object and creates/updates a
+		Exec   - fetches an object and creates/updates a
 				 resource at destination
 		Fetch  - a 'copy' to STDOUT (i.e. read resource)
 		Delete - deletes an object
@@ -45,11 +45,6 @@ func main() {
 				 (possible flag to copy instead?)
 	*******************************************************/
 	app.Commands = []cli.Command{
-		{
-			Name:   "copy",
-			Usage:  "Copy or pipe from <src> to <dest>",
-			Action: cmdCopy,
-		},
 		{
 			Name:   "exec",
 			Usage:  "Pipe from <src> to stdout",
@@ -101,25 +96,6 @@ func main() {
 		Actions are functions to perform a task,
 		accepting and outputting Objects.
 *******************************************************/
-
-// Handle the 'copy' CLI command.
-func cmdCopy(c *cli.Context) {
-	logrus.Debug("Fetching ", c.Args().First())
-	fromPath := dereferencePath(c.Args().First())
-	fromObj := dereferenceObj(fromPath)
-
-	msg := fromObj.read()
-
-	logrus.Debug("Sending to ", c.Args().Get(1))
-	logrus.Debug("Content: ", msg)
-
-	destPath := dereferencePath(c.Args().Get(1))
-	destObj := dereferenceObj(destPath)
-
-	response := destObj.update(msg)
-
-	logrus.Debug("Recipient response: ", response)
-}
 
 // Handle the 'fetch' CLI command.
 func cmdFetch(c *cli.Context) {
