@@ -3,16 +3,14 @@ IOPIPE
 ---------------------------------------
 Apache 2.0 licensed.
 
-The IOPIPE cli tool uses APIntents to provide compatibility
-and discovery between web services.
+The IOPIPE cli tool uses pipescripts, javascript-based microservices,
+to simplify the consumption and integration of web services.
 
-All web sevices and IoT devices are expected to provide
-HTTP services with an API. To simplify automatic integration
-with these services, it's necessary to have a lingua de franca,
-an abstract language for which to communicate. For this reason,
-APIntents are designed to provide a simplified and unified interface
-to arbitrary data, sensors, and machine operations.
+Pipescripts can transform data into web service requests and
+can transform responses into JSON documents.
 
+Web services may be placed anywhere within a pipeline, allowing
+transformations (and code execution) to happen on both client & server.
 
 ---------------------------------------
 Usage
@@ -24,6 +22,9 @@ $ iopipe fetch http://localhost/some-request
 
 # Fetch response and convert to an object (to stdout)
 $ iopipe exec http://localhost/some-request com.example.SomeObject
+
+# Fetch response and convert to an object, sending SomeObject to otherhost.
+$ iopipe exec http://localhost/some-request com.example.SomeObject http://otherhost/request
 
 # Fetch response and pipe into another web service
 $ iopipe copy http://localhost/dogs/spot http://otherhost/dogs/
