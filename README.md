@@ -21,16 +21,16 @@ Usage
 $ iopipe fetch http://localhost/some-request
 
 # Fetch response and convert to an object (to stdout)
-$ iopipe exec http://localhost/some-request com.example.SomeObject
+$ iopipe --debug exec http://localhost/some-request com.example.SomeObject
 
 # Fetch response and convert to an object, sending SomeObject to otherhost.
-$ iopipe exec http://localhost/some-request com.example.SomeObject \
-              http://otherhost/request
+$ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
+                      http://otherhost/request
 
 # Fetch response and convert to an object, sending SomeObject to otherhost,
 # & converting the response into a ResponseObject
-$ iopipe exec http://localhost/some-request com.example.SomeObject \
-              http://otherhost/request some.example.ResponseObject
+$ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
+                      http://otherhost/request some.example.ResponseObject
 ```
 
 ---------------------------------------
