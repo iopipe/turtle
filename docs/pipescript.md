@@ -1,9 +1,26 @@
 Pipescript is a subset of ECMAScript / Javascript.
 
 Scripts initiate with a variable predefined, 'input',
-containing a JSON string to be parsed.
+containing input bytes to be parsed. Each script is associated
+with a pre-defined input and output type.
 
-Scripts are expected to return a JSON string.
+Scripts are expected to output an Object matching the following
+Object Schema. Objects should adhere to their Class Schema, which
+is their JSON Schema definition.
+
+------------------
+Example pipescript
+------------------
+
+The following converts a GenericMessage into a Twitter status update request:
+
+```javascript
+var obj = JSON.parse(input);
+var statusRequest = {
+  "status": obj["properties"]["text"]
+};
+JSON.stringify(statusRequest);
+```
 
 -------------
 Object Schema
