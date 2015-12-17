@@ -24,7 +24,14 @@ $ iopipe fetch http://localhost/some-request
 $ iopipe exec http://localhost/some-request com.example.SomeObject
 
 # Fetch response and convert to an object, sending SomeObject to otherhost.
-$ iopipe exec http://localhost/some-request com.example.SomeObject http://otherhost/request
+$ iopipe exec http://localhost/some-request com.example.SomeObject \
+              http://otherhost/request
+
+# Fetch response and convert to an object, sending SomeObject to otherhost,
+# & converting the response into a ResponseObject
+$ iopipe exec http://localhost/some-request com.example.SomeObject \
+              http://otherhost/request some.example.ResponseObject
+
 
 # Fetch response and pipe into another web service
 $ iopipe copy http://localhost/dogs/spot http://otherhost/dogs/
