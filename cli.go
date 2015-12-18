@@ -158,16 +158,16 @@ func cmdExec(c *cli.Context) {
 			}
 		} else if arg == "-" {
 			logrus.Debug("From STDIN")
-			bytes, err := ioutil.ReadAll(os.Stdin)
+			script, err := ioutil.ReadAll(os.Stdin)
 			if err != nil {
 				log.Fatal(err)
 				return
 			}
 			if i == 0 {
-				msg = string(bytes[:])
+				msg = string(script[:])
 			} else {
 				// If not the first argument, then expect pipescript
-				filter, err := makeFilter(string(bytes[:]))
+				filter, err := makeFilter(string(script[:]))
 				if err != nil {
 					log.Fatal(err)
 					return
