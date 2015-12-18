@@ -188,7 +188,7 @@ func cmdExec(c *cli.Context) {
 		logrus.Debug(fmt.Sprintf("pipe[%i][raw]: %s\n", i, msg))
 
 		if i == len(c.Args()) {
-			logrus.Debug("output: " + msg)
+			println(msg)
 			return
 		}
 		lastObj = msg
