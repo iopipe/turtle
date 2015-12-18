@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/robertkrimen/otto"
 	"github.com/Sirupsen/logrus"
+	"github.com/robertkrimen/otto"
 
 	//"errors"
 	"io/ioutil"
