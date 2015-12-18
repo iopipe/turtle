@@ -105,7 +105,7 @@ func cmdFetch(c *cli.Context) {
 
 	msg := fromObj.read()
 	logrus.Debug("Raw msg:")
-	logrus.Debug(msg)
+	println(msg)
 }
 
 func execFilter(lastObj string, toObjType string) (msg string, err error) {
@@ -135,7 +135,6 @@ func cmdExec(c *cli.Context) {
 
 	for i := 0; i < len(c.Args()); i++ {
 		arg := c.Args()[i]
-		logrus.Debug("Deconstructing ", arg)
 		var msg string
 
 		path, err := url.Parse(arg)
@@ -143,11 +142,12 @@ func cmdExec(c *cli.Context) {
 			log.Fatal(err)
 		}
 
+		logrus.Info("pipe[arg]: " + arg)
+
 		if path.Scheme == "http" || path.Scheme == "https" {
 			argPath := dereferencePath(arg)
 			argObj := dereferenceObj(argPath)
 
-			logrus.Info("pipe[argPath]: " + argPath)
 			// If first argument, then we must GET,
 			// note that this case follows the '-' so all
 			// shell input will pipe into the POST.
@@ -157,13 +157,13 @@ func cmdExec(c *cli.Context) {
 				msg = argObj.update(lastObj)
 			}
 		} else if arg == "-" {
-			logrus.Debug("From STDIN")
 			script, err := ioutil.ReadAll(os.Stdin)
 			if err != nil {
 				log.Fatal(err)
 				return
 			}
 			if i == 0 {
+				// If first argument, assume is generic bytes input.
 				msg = string(script[:])
 			} else {
 				// If not the first argument, then expect pipescript
@@ -178,7 +178,6 @@ func cmdExec(c *cli.Context) {
 				}
 			}
 		} else {
-			logrus.Debug("via default")
 			msg, err = execFilter(lastObj, arg)
 			if err != nil {
 				log.Fatal(err)
