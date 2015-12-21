@@ -4,10 +4,16 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/robertkrimen/otto"
 
-	//"errors"
-	"io/ioutil"
+	"errors"
 	"log"
+	"os"
+	"path"
+	"strings"
+
+	"crypto/sha256"
+	"io/ioutil"
 	"net/http"
+	"os/user"
 )
 
 const FILTER_BASE string = "http://192.241.174.50/filters/"
@@ -52,14 +58,100 @@ func makeFilter(script string) (func(input string) (string, error), error) {
 	}, nil
 }
 
-func findFilter(fromObjType string, toObjType string) (func(input string) (string, error), error) {
+func fetchFilter(filterPath string) ([]byte, error) {
 	var (
 		res  *http.Response
 		body []byte
 		err  error
 	)
 
-	path := FILTER_BASE + fromObjType + "/" + toObjType
+	path := path.Join(FILTER_BASE, filterPath)
+	res, err = http.Get(path)
+	if err != nil {
+		return nil, err
+	}
+	body, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	res.Body.Close()
+
+	/* Verify digest */
+	chksum := sha256.Sum256(body[:])
+	if filterPath != string(chksum[:]) {
+		return nil, errors.New("Checksum failure")
+	}
+
+	return body, nil
+}
+
+func getFilter(filterPath string) (func(input string) (string, error), error) {
+	var script []byte
+	var err error
+	reqPathParts := strings.Split(filterPath, "/")
+
+	myuser, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
+	pathParts = append(pathParts, reqPathParts...)
+	diskPath := path.Join(pathParts...)
+	//myuser.HomeDir, ".iopipe", "filter_cache", pathParts...)
+
+	/* Do we have this cached? */
+	if _, err := os.Stat(diskPath); err == nil {
+		script, err = ioutil.ReadFile(diskPath)
+		return makeFilter(string(script[:]))
+	}
+	/* If not, fetch */
+	if script, err = fetchFilter(filterPath); err != nil {
+		return nil, err
+	}
+	/* Write cache */
+	if err = ioutil.WriteFile(diskPath, script, 0600); err != nil {
+		return nil, err
+	}
+	return makeFilter(string(script[:]))
+}
+
+func getPipeline(filterPath string) (func(input string) (string, error), error) {
+	var script []byte
+	var err error
+	reqPathParts := strings.Split(filterPath, "/")
+	myuser, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
+	pathParts = append(pathParts, reqPathParts...)
+	diskPath := path.Join(pathParts...)
+	//myuser.HomeDir, ".iopipe", "filter_cache", pathParts...)
+
+	/* Do we have this cached? */
+	if _, err := os.Stat(diskPath); err == nil {
+		script, err = ioutil.ReadFile(diskPath)
+		return makeFilter(string(script[:]))
+	}
+	/* If not, fetch */
+	if script, err = fetchFilter(filterPath); err != nil {
+		return nil, err
+	}
+	/* Write cache */
+	if err = ioutil.WriteFile(diskPath, script, 0600); err != nil {
+		return nil, err
+	}
+	return makeFilter(string(script[:]))
+}
+
+func findFilters(fromObjType string, toObjType string) string {
+	var (
+		res  *http.Response
+		body []byte
+		err  error
+	)
+
+	path := path.Join(FILTER_BASE, fromObjType, toObjType)
 	res, err = http.Get(path)
 	if err != nil {
 		log.Fatal(err)
@@ -69,7 +161,27 @@ func findFilter(fromObjType string, toObjType string) (func(input string) (strin
 		log.Fatal(err)
 	}
 	res.Body.Close()
-	script := string(body[:])
+	response := string(body[:])
+	return response
+}
 
-	return makeFilter(script)
+func findPipelines(fromObjType string, toObjType string) string {
+	var (
+		res  *http.Response
+		body []byte
+		err  error
+	)
+
+	path := path.Join(FILTER_BASE, fromObjType, toObjType)
+	res, err = http.Get(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	res.Body.Close()
+	response := string(body[:])
+	return response
 }

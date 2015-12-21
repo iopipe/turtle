@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"encoding/json"
 	"io/ioutil"
@@ -117,7 +118,7 @@ func execFilter(lastObj string, toObjType string) (msg string, err error) {
 
 	logrus.Info("pipe[lastObjType/toObjType]: %s/%s\n", lastObjType, toObjType)
 
-	filter, err := findFilter(lastObjType, toObjType)
+	filter, err := getFilter(path.Join(lastObjType, toObjType))
 	if err != nil {
 		return "", err
 	}
@@ -178,7 +179,18 @@ func cmdExec(c *cli.Context) {
 				}
 			}
 		} else {
-			msg, err = execFilter(lastObj, arg)
+			// Search
+			/*msg, err = execFilter(lastObj, arg)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}*/
+			filter, err := getFilter(arg)
+			if err != nil {
+				return
+			}
+			// Search
+			msg, err = filter(lastObj)
 			if err != nil {
 				log.Fatal(err)
 				return
