@@ -33,6 +33,24 @@ $ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
                       http://otherhost/request some.example.ResponseObject
 ```
 
+NodeJS SDK:
+
+```javascript
+var iopipe = require("iopipe")
+
+// Note that pipescript objects such as SomeObject are not *yet* supported.
+iopipe.exec("http://localhost/some-request", "com.example.SomeObject",
+            "http://otherhost.request")
+
+// Users may chain functions and HTTP requests.
+iopipe.exec(function() { return "something" }, function(arg) { return arg },
+            "http://otherhost.request")
+
+// A function may also be returned then executed later.
+var f = iopipe.define("http://fetch", "https://post")
+f()
+```
+
 ---------------------------------------
 Filters & Pipescript
 ---------------------------------------
