@@ -8,5 +8,5 @@
     "read-stream": "",
     "request": ""
   },
-  "scripts": { "start": "node myapp.js" }
+  "scripts": { "start": "node example.js" }
 }
