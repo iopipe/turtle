@@ -29,17 +29,7 @@ function httpCallback(u, done) {
     }
   }
 }
-/*  var lastCallback = arguments[0]
-  if (arguments.length > 1) {
-    lastCallback(arg(arguments[1]))
-  } else {
-    lastCallback(arg());
-  }
-}*/
 
-/* I'm thinking that perhaps we should simply convert the args into
- a Node Stream .pipe(a).pipe(b).pipe(c) etc. This will be compatible with
- Node'isms and flexible for Node users */
 exports.define = function() {
   var callbackList = []
   var nextCallback;
@@ -47,11 +37,9 @@ exports.define = function() {
 
   for (var i = arguments.length - 1; i > -1; i--) {
     var arg = arguments[i];
-    console.log("Processing arg: " + arg)
 
     if (typeof arg === "function") {
       nextCallback = funcCallback(arg, lastCallback)
-      console.log("Processed function: " + arg)
     } else if (typeof(arg) === "string") {
       var u = url.parse(arg);
 
@@ -73,10 +61,9 @@ exports.define = function() {
              }))
            }
          }
-         console.log("Processed pipescript")
       }
     } else {
-      console.log("Unknown argument: " + arg)
+      console.log("WARNING: skipping unknown argument: " + arg)
     }
     lastCallback = nextCallback
   }
