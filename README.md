@@ -16,6 +16,8 @@ transformations (and code execution) to happen on both client & server.
 Usage
 ---------------------------------------
 
+## Command-line
+
 ```sh
 # Fetch a web service response (Curl-like usage)
 $ iopipe fetch http://localhost/some-request
@@ -33,18 +35,22 @@ $ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
                       http://otherhost/request some.example.ResponseObject
 ```
 
-NodeJS SDK:
+## NodeJS SDK:
+
+The NodeJS SDK provides a generic callback chaining mechanism which allows
+mixing HTTP(S) requests/POSTs, function calls, and pipescripts. Callbacks
+receive the return of the previous function call or HTTP body.
 
 ```javascript
 var iopipe = require("iopipe")
 
 // Note that pipescript objects such as SomeObject are not *yet* supported.
-iopipe.exec("http://localhost/some-request", "com.example.SomeObject",
-            "http://otherhost.request")
+iopipe.exec("http://localhost/get-request", "com.example.SomeObject",
+            "http://otherhost.post")
 
 // Users may chain functions and HTTP requests.
 iopipe.exec(function() { return "something" }, function(arg) { return arg },
-            "http://otherhost.request")
+            "http://otherhost.post", your_callback)
 
 // A function may also be returned then executed later.
 var f = iopipe.define("http://fetch", "https://post")
