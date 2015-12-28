@@ -45,12 +45,15 @@ receive the return of the previous function call or HTTP body.
 var iopipe = require("iopipe")
 
 // Note that pipescript objects such as SomeObject are not *yet* supported.
-iopipe.exec("http://localhost/get-request", "com.example.SomeObject",
+iopipe.exec("http://localhost/get-request",
+            "com.example.SomeObject",
             "http://otherhost.post")
 
 // Users may chain functions and HTTP requests.
-iopipe.exec(function() { return "something" }, function(arg) { return arg },
-            "http://otherhost.post", your_callback)
+iopipe.exec(function() { return "something" },
+            function(arg) { return arg },
+            "http://otherhost.post",
+            your_callback)
 
 // A function may also be returned then executed later.
 var f = iopipe.define("http://fetch", "https://post")
