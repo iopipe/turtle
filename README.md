@@ -16,7 +16,7 @@ transformations (and code execution) to happen on both client & server.
 Usage
 ---------------------------------------
 
-## Command-line
+### Command-line
 
 ```sh
 # Fetch a web service response (Curl-like usage)
@@ -35,7 +35,7 @@ $ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
                       http://otherhost/request some.example.ResponseObject
 ```
 
-## NodeJS SDK:
+### NodeJS SDK:
 
 The NodeJS SDK provides a generic callback chaining mechanism which allows
 mixing HTTP(S) requests/POSTs, function calls, and pipescripts. Callbacks
