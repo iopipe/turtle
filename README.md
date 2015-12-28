@@ -120,15 +120,16 @@ deploying filter repositories.
 Security
 ---------------------------------------
 
-All API endpoints MUST be exposed via TLS 1.2.
-This requirement is based on flaws in earlier versions
-of TLS and the fact we have the opportunity to specify
-a greenfield requirement.
-
 Note that this tool communicates to 3rd-party
 web services. Caution is advised when trusting
 these services, as is standard practice with
 web and cloud services.
+
+Pipescripts are executed in individual
+javascript VMs whenever allowed by the host
+system. Users should still exercise caution
+when running pipescripts provided by other
+users.
 
 Contact security@iopipe.com for questions.
 
