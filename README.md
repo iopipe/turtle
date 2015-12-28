@@ -106,15 +106,9 @@ Furthermore:
 Scaling
 ---------------------------------------
 
-Scaling of individual APIs is performed as is
-typically done for web services. Globally, scaling is
-performed through the distributed nature of the web,
-as in there is no centralized server hosting all
-IOPIPE web services.
-
 Filters are pulled from (de)centralized repositories
 and scale should be considered when building and
-deploying filter repositories.
+deploying private filter repositories.
 
 ---------------------------------------
 Security
