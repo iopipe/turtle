@@ -1,0 +1,12 @@
+{
+  "name": "iopipe",
+  "private": true,
+  "version": "0.0.1",
+  "description": "iopipe sdk",
+  "author": "Eric Windisch",
+  "dependencies": {
+    "read-stream": "",
+    "request": ""
+  },
+  "scripts": { "start": "node example.js" }
+}
