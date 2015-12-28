@@ -5,8 +5,8 @@
   "description": "iopipe sdk",
   "author": "Eric Windisch",
   "dependencies": {
-    "flow": "",
-    "read-stream": ""
+    "read-stream": "",
+    "request": ""
   },
   "scripts": { "start": "node myapp.js" }
 }

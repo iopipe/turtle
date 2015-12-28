@@ -1,103 +1,89 @@
 /*
- pipe("http://api.twitter.com/blah/blah", function() {}, "sha256:DEADBEEF", "user/pipeline", "http://somedestination/")
+ Usage:
+ var iopipe = require('iopipe')
+ iopipe.exec("http://api.twitter.com/blah/blah", function() {}, "sha256:DEADBEEF", "user/pipeline", "http://somedestination/")
 */
 var url = require('url')
-var http = require('http')
+var request = require("request")
 var util = require('util')
-//var Transform = require('readable-stream').Transform
-var Transform = require('stream').Transform
 var vm = require('vm')
-var flow = require('flow')
 
-/* Take a script (function) and return a Transform Stream:
-   https://nodejs.org/api/stream.html#stream_class_stream_transform_1 */
-function functionTransformer(script) {
-  var obj = new Transform()
-  obj.prototype._transform = function(chunk, encoding, done) {
-    this._buffer += chunk
-    done()
+function funcCallback(call, done) {
+  return function() {
+    done(call.apply(this, [].slice.call(arguments)))
   }
-  obj.prototype._flush = function(done) {
-    var output = script(this._buffer)
-    this.push(output)
-    done()
-  }
-  return obj
 }
 
-function httpTransformer(options) {
-  var server = options.hostname
-  var transformer = new Transform()
-  var req = http.request(options)
-  if (arguments.length > 0) {
-    var input = arguments[0]
-    input.pipe(req)
+function httpCallback(u, done) {
+  return function() {
+    if (arguments.length === 0) {
+      request.get({url: url.format(u), strictSSL: true }, function(error, response, body) {
+        done(body)
+      })
+    } else {
+      prevResult = arguments[0]
+      request.post({url: url.format(u), body: prevResult, strictSSL: true },
+                    function(error, response, body) {
+                      done(body)
+                    })
+    }
   }
-  req.pipe(transformer)
-  return transformer
 }
+/*  var lastCallback = arguments[0]
+  if (arguments.length > 1) {
+    lastCallback(arg(arguments[1]))
+  } else {
+    lastCallback(arg());
+  }
+}*/
 
 /* I'm thinking that perhaps we should simply convert the args into
  a Node Stream .pipe(a).pipe(b).pipe(c) etc. This will be compatible with
  Node'isms and flexible for Node users */
-exports.define = function(done) {
+exports.define = function() {
   var callbackList = []
-  var prevResult = ""
+  var nextCallback;
+  var lastCallback = function(result) { console.log(result) };
 
-  for (var i = 0; i > arguments.length; i++) {
+  for (var i = arguments.length - 1; i > -1; i--) {
     var arg = arguments[i];
+    console.log("Processing arg: " + arg)
 
-    /* if we have an input, do a post...
-       otherwise perform a GET */
-    /*if typeof(arg) == "object" {
-      if i == 0 {
-        last_arg = arg
-	continue
-      }
-      last_arg = arg(last_arg)
-    */
-
-    if (typeof arg === "object" && arg.isPrototypeOf(Transform)) {
-      callbackList.push(arg)
-    } else if (typeof arg === "function") {
-      console.log("Run function")
-      if (i === 0) {
-        callbackList.push(functionTransformer(arg))
-      } else {
-        callbackList.push(arg)
-      }
+    if (typeof arg === "function") {
+      nextCallback = funcCallback(arg, lastCallback)
+      console.log("Processed function: " + arg)
     } else if (typeof(arg) === "string") {
-       var u = url.parse(arg);
+      var u = url.parse(arg);
 
-       if (u.protocol === 'http:' || u.protocol === 'https:') {
-         var server = u.hostname
-         var transformer = new Transform()
-         if (i > 0) {
-           u.method = 'POST';
-         }
-         callbackList.push(httpTransformer(u))
+      if (u.protocol === 'http:' || u.protocol === 'https:') {
+        var server = u.hostname
+        nextCallback = httpCallback(u, lastCallback)
       } else {
          // Pull from index (or use cached pipescripts)
          /* download script */
          var script = ""
-         var lambda = function(prevResult) {
-           vm.runInNewContext(script, {
-             input: prevResult
-           });
-         };
-         callbackList(functionTransformer(lambda))
+         if (i === 0) {
+           nextCallback = function() {
+             return lastCallback(vm.runInNewContext(script))
+           };
+         } else {
+           nextCallback = function(prevResult) {
+             return lastCallback(vm.runInNewContext(script, {
+               input: prevResult
+             }))
+           }
+         }
+         console.log("Processed pipescript")
       }
     } else {
-      console.log("Unknown argument.")
+      console.log("Unknown argument: " + arg)
     }
+    lastCallback = nextCallback
   }
-  callbackList.push(done)
-
-  return flow.define.apply(this, callbackList)
+  return nextCallback
 }
 
-exports.exec = function(done) {
+exports.exec = function() {
   var l = [].slice.call(arguments)
-  l.push(done)
-  exports.define.apply(this, l) 
+  exports.define.apply(this, l)()
 }
