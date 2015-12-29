@@ -8,5 +8,5 @@
     "read-stream": "",
     "request": ""
   },
-  "scripts": { "start": "node example.js" }
+  "main": "./iopipe.js"
 }
