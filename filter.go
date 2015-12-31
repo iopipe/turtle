@@ -16,6 +16,14 @@ import (
 	"os/user"
 )
 
+const FILTER_BASE string = "http://192.241.174.50/filters/"
+const REQUIREJS_URL string = "http://requirejs.org/docs/release/2.1.22/r.js"
+
+type filterTuple struct {
+	fromObjType string
+	toObjType   string
+}
+
 func listScripts() {
 	open()
 	read()
@@ -53,14 +61,6 @@ func exportScript(pipeline string, name string) {
 			}
 			`)
 	*/
-}
-
-const FILTER_BASE string = "http://192.241.174.50/filters/"
-const REQUIREJS_URL string = "http://requirejs.org/docs/release/2.1.22/r.js"
-
-type filterTuple struct {
-	fromObjType string
-	toObjType   string
 }
 
 func makeFilter(script string) (func(input string) (string, error), error) {
