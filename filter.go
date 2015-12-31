@@ -16,6 +16,45 @@ import (
 	"os/user"
 )
 
+func listScripts() {
+	open()
+	read()
+	fancyOutput()
+}
+
+func exportScript(pipeline string, name string) {
+	/*
+			// Make directory...
+
+			var cfgf = io.FileWriter //>>iopipe-cfg.json:
+			var scriptf = io.Filewriter //>index.js
+			var packagef = io.Filewriter //>package.json
+			cfgf.write(`{"auth": {}}`)
+
+			scriptf.write(`var iopipe = require("iopipe")
+		        var config = require("./iopipe-cfg.json")
+			iopipe.load_config(config)
+			exports.run = function() {
+		          iopipe.exec()
+		        }`)
+
+			packagef.write(`
+			{
+			  "name": "iopipe",
+			  "private": true,
+			  "version": "0.0.1",
+			  "description": "iopipe sdk",
+			  "author": "Eric Windisch",
+			  "dependencies": {
+			    "read-stream": "",
+			    "request": ""
+			  },
+			  "main": "./iopipe.js"
+			}
+			`)
+	*/
+}
+
 const FILTER_BASE string = "http://192.241.174.50/filters/"
 const REQUIREJS_URL string = "http://requirejs.org/docs/release/2.1.22/r.js"
 
@@ -85,10 +124,19 @@ func fetchFilter(filterPath string) ([]byte, error) {
 	return body, nil
 }
 
-func getFilter(filterPath string) (func(input string) (string, error), error) {
-	var script []byte
-	var err error
-	reqPathParts := strings.Split(filterPath, "/")
+func writeCache(body []byte) {
+	/* Verify digest */
+	chksum := sha256.Sum256(body[:])
+	diskPath := getCachePath(chksum)
+
+	/* Write cache */
+	if err = ioutil.WriteFile(diskPath, script, 0600); err != nil {
+		return nil, err
+	}
+}
+
+func getCachePath(name string) string {
+	reqPathParts := strings.Split(name, "/")
 
 	myuser, err := user.Current()
 	if err != nil {
@@ -96,22 +144,50 @@ func getFilter(filterPath string) (func(input string) (string, error), error) {
 	}
 	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
 	pathParts = append(pathParts, reqPathParts...)
-	diskPath := path.Join(pathParts...)
-	//myuser.HomeDir, ".iopipe", "filter_cache", pathParts...)
+	return path.Join(pathParts...)
+}
+
+func readFilterCache(name string) ([]byte, error) {
+	diskPath := getCachePath(name)
 
 	/* Do we have this cached? */
-	if _, err := os.Stat(diskPath); err == nil {
-		script, err = ioutil.ReadFile(diskPath)
-		return makeFilter(string(script[:]))
+	if _, err := os.Stat(diskPath); err != nil {
+		return "", err
 	}
+	script, err = ioutil.ReadFile(diskPath)
+	return script[:], nil
+}
+
+func importScript(file string) {
+	if file == "-" {
+		fH := os.STDIN
+	}
+
+	chksum := sha256.Sum256(body[:])
+	writeFilter(chksum, body[:])
+}
+
+func getFilter(filterPath string) (func(input string) (string, error), error) {
+	var script []byte
+	var err error
+
+	diskPath := getCachePath(filterPath)
+
+	/* Do we have this cached? */
+	if script, err := readFilterCache(filterPath); err != nil {
+		return makeFilter(string(script[:]))
+	} else {
+		return "", err
+	}
+
 	/* If not, fetch */
 	if script, err = fetchFilter(filterPath); err != nil {
 		return nil, err
 	}
-	/* Write cache */
-	if err = ioutil.WriteFile(diskPath, script, 0600); err != nil {
+	if err = writeCache(script); err != nil {
 		return nil, err
 	}
+
 	return makeFilter(string(script[:]))
 }
 
@@ -144,7 +220,7 @@ func getPipeline(filterPath string) (func(input string) (string, error), error) 
 	return makeFilter(string(script[:]))
 }
 
-func findFilters(fromObjType string, toObjType string) string {
+func findFilters(fromObjType string, toObjType string) (string, error) {
 	var (
 		res  *http.Response
 		body []byte
@@ -154,18 +230,18 @@ func findFilters(fromObjType string, toObjType string) string {
 	path := path.Join(FILTER_BASE, fromObjType, toObjType)
 	res, err = http.Get(path)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	res.Body.Close()
 	response := string(body[:])
-	return response
+	return response, nil
 }
 
-func findPipelines(fromObjType string, toObjType string) string {
+func findPipelines(fromObjType string, toObjType string) (string, error) {
 	var (
 		res  *http.Response
 		body []byte
@@ -175,13 +251,19 @@ func findPipelines(fromObjType string, toObjType string) string {
 	path := path.Join(FILTER_BASE, fromObjType, toObjType)
 	res, err = http.Get(path)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	res.Body.Close()
 	response := string(body[:])
-	return response
+	return response, nil
+}
+
+func publishPipeline(pipeline string) {
+}
+
+func subscribePipeline(pipeline string) {
 }

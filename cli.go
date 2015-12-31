@@ -15,6 +15,7 @@ import (
 )
 
 var debug bool = false
+var name string
 
 func main() {
 	//var debug bool = false
@@ -33,80 +34,124 @@ func main() {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 	}
-	/*******************************************************
-	Commands:
-
-		Exec   - fetches an object and creates/updates a
-				 resource at destination
-		Fetch  - a 'copy' to STDOUT (i.e. read resource)
-		Delete - deletes an object
-		Create - Like copy, but will not update existing
-				 records (possible flag to 'copy' instead?)
-		Update - Like copy, but refuse to create new records
-				 (possible flag to copy instead?)
-	*******************************************************/
 	app.Commands = []cli.Command{
+		{
+			Name:   "create",
+			Usage:  "Create pipescript in local index.",
+			Action: cmdCreate,
+		},
+		{
+			Name:  "remove",
+			Usage: "Remove pipescript from local index.",
+			Action: func(c *cli.Context) {
+				logrus.Debug("Deleting ", c.Args().First())
+			},
+		},
 		{
 			Name:   "exec",
 			Usage:  "Pipe from <src> to stdout",
 			Action: cmdExec,
 		},
 		{
-			Name:   "fetch",
-			Usage:  "Fetch <src>, output to STDOUT",
-			Action: cmdFetch,
-		},
-		{
-			Name:  "delete",
-			Usage: "Delete object",
-			Action: func(c *cli.Context) {
-				logrus.Debug("Deleting ", c.Args().First())
+			Name:   "export",
+			Usage:  "Export will write a Javascript library for the given pipeline",
+			Action: cmdExport,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:        "name",
+					Usage:       "NPM package name",
+					Destination: &name,
+				},
 			},
 		},
 		{
-			Name:   "create",
-			Usage:  "Create object. Like copy, but only if can be guaranteed as a new object.",
-			Action: cmdCreate,
+			Name:  "list",
+			Usage: "List local and subscribed pipes",
+			Action: cmdList,
 		},
 		{
-			Name:  "update",
-			Usage: "Update an object, only if it already exists.",
+			Name:  "login",
+			Usage: "Login to an endpoint",
 			Action: func(c *cli.Context) {
-				logrus.Debug("Creating ", c.Args().First())
+				logrus.Debug("Logging in to ", c.Args().First())
+			},
+		},
+		{
+			Name:  "publish",
+			Usage: "Publish a pipescript or pipeline",
+			Action: func(c *cli.Context) {
+				logrus.Debug("Pushing ", c.Args().First())
+			},
+		},
+		{
+			Name:  "subscribe",
+			Usage: "Add pipescript or pipeline to local index",
+			Action: func(c *cli.Context) {
+				logrus.Debug("Pulling ", c.Args().First())
 			},
 		},
 	}
 	app.Run(os.Args)
 }
 
-/*******************************************************
-	High level API management:
+func cmdList(c *cli.Context) {
+}
 
-	APIs must expose:
-		* Objects
-		* Actions
+func cmdLogin(c *cli.Context) {
+}
 
-	Objects:
+func cmdPublish(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		log.Fatal("No pipeline specified for subscription.")
+	}
+	pipeline := c.Args()[0]
 
-		These are objects which may be part of a
-		CRUD operation (to create or modify objects),
-		or as input or output for Actions.
+	publishPipeline(pipeline)
+}
 
-	Actions:
+func cmdSubscribe(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		log.Fatal("No pipeline specified for subscription.")
+	}
+	pipeline := c.Args()[0]
 
-		Actions are functions to perform a task,
-		accepting and outputting Objects.
-*******************************************************/
+	subscribePipeline(pipeline)
+}
 
-// Handle the 'fetch' CLI command.
-func cmdFetch(c *cli.Context) {
-	logrus.Debug("Fetching ", c.Args().First())
-	fromPath := dereferencePath(c.Args().First())
-	fromObj := dereferenceObj(fromPath)
+func cmdCreate(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		log.Fatal("No filters specified.")
+	}
+	pipeline := c.Args()[0]
+	if name == "" {
+		name = pipeline
+	}
 
-	msg := fromObj.read()
-	logrus.Debug("Raw msg:")
-	println(msg)
+	createPipeline(pipeline, name)
+}
+
+func cmdImport(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		log.Fatal("No pipeline specified for import.")
+	}
+	pipeline := c.Args()[0]
+	if name == "" {
+		name = pipeline
+	}
+
+	importScript(pipeline, name)
+}
+
+func cmdExport(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		log.Fatal("No pipeline specified for export.")
+	}
+	pipeline := c.Args()[0]
+	if name == "" {
+		name = pipeline
+	}
+
+	exportScript(pipeline, name)
 }
 
 func execFilter(lastObj string, toObjType string) (msg string, err error) {
@@ -204,9 +249,4 @@ func cmdExec(c *cli.Context) {
 		}
 		lastObj = msg
 	}
-}
-
-// Handle the 'create' CLI command.
-func cmdCreate(c *cli.Context) {
-	logrus.Debug("Creating object ", c.Args().First())
 }
