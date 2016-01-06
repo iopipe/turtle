@@ -88,7 +88,7 @@ func main() {
 				logrus.Debug("Logging in to ", c.Args().First())
 			},
 		},
-		{
+		/*{
 			Name:  "publish",
 			Usage: "Publish a pipescript or pipeline",
 			Action: func(c *cli.Context) {
@@ -101,7 +101,7 @@ func main() {
 			Action: func(c *cli.Context) {
 				logrus.Debug("Pulling ", c.Args().First())
 			},
-		},
+		},*/
 		{
 			Name:   "tag",
 			Usage:  "Tag a pipescript or pipeline to a name",
