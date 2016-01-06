@@ -44,7 +44,6 @@ receive the return of the previous function call or HTTP body.
 ```javascript
 var iopipe = require("iopipe")
 
-// Note that pipescript objects such as SomeObject are not *yet* supported.
 iopipe.exec("http://localhost/get-request",
             "com.example.SomeObject",
             "http://otherhost.post")
