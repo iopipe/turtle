@@ -4,7 +4,10 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/robertkrimen/otto"
 
+	"bufio"
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -25,9 +28,9 @@ type filterTuple struct {
 }
 
 func listScripts() {
-	open()
+	/*open()
 	read()
-	fancyOutput()
+	fancyOutput()*/
 }
 
 func exportScript(pipeline string, name string) {
@@ -124,67 +127,93 @@ func fetchFilter(filterPath string) ([]byte, error) {
 	return body, nil
 }
 
-func writeCache(body []byte) {
+func writeCache(body []byte) (string, error) {
+	var err error
+
 	/* Verify digest */
 	chksum := sha256.Sum256(body[:])
-	diskPath := getCachePath(chksum)
+	id := fmt.Sprintf("%h", chksum)
+	diskPath, err := getCachePath(id)
+	if err != nil {
+		return id, err
+	}
 
 	/* Write cache */
-	if err = ioutil.WriteFile(diskPath, script, 0600); err != nil {
-		return nil, err
+	if err = ioutil.WriteFile(diskPath, body, 0600); err != nil {
+		return id, err
 	}
+	return id, nil
 }
 
-func getCachePath(name string) string {
+func getCachePath(name string) (string, error) {
 	reqPathParts := strings.Split(name, "/")
 
 	myuser, err := user.Current()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
 	pathParts = append(pathParts, reqPathParts...)
-	return path.Join(pathParts...)
+	return path.Join(pathParts...), nil
 }
 
 func readFilterCache(name string) ([]byte, error) {
-	diskPath := getCachePath(name)
+	var err error
+
+	diskPath, err := getCachePath(name)
+	if err != nil {
+		return nil, err
+	}
 
 	/* Do we have this cached? */
-	if _, err := os.Stat(diskPath); err != nil {
-		return "", err
+	if _, err = os.Stat(diskPath); err != nil {
+		return nil, err
 	}
-	script, err = ioutil.ReadFile(diskPath)
+	script, err := ioutil.ReadFile(diskPath)
 	return script[:], nil
 }
 
-func importScript(file string) {
+func importScript(file string) (string, error) {
+	var err error
+	var fH io.Reader
+
 	if file == "-" {
-		fH := os.STDIN
+		fH = os.Stdin
+	} else {
+		fH, err = os.Open(file)
+		if err != nil {
+			return "", err
+		}
+	}
+	reader := bufio.NewReader(fH)
+	body, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return "", err
 	}
 
-	chksum := sha256.Sum256(body[:])
-	writeFilter(chksum, body[:])
+	id, err := writeCache(body[:])
+	if err != nil {
+		return id, err
+	}
+	return id, nil
 }
 
 func getFilter(filterPath string) (func(input string) (string, error), error) {
 	var script []byte
 	var err error
 
-	diskPath := getCachePath(filterPath)
-
 	/* Do we have this cached? */
 	if script, err := readFilterCache(filterPath); err != nil {
 		return makeFilter(string(script[:]))
 	} else {
-		return "", err
+		return nil, err
 	}
 
 	/* If not, fetch */
 	if script, err = fetchFilter(filterPath); err != nil {
 		return nil, err
 	}
-	if err = writeCache(script); err != nil {
+	if _, err = writeCache(script); err != nil {
 		return nil, err
 	}
 
@@ -262,8 +291,16 @@ func findPipelines(fromObjType string, toObjType string) (string, error) {
 	return response, nil
 }
 
-func publishPipeline(pipeline string) {
+func publishPipeline(pipelineName string) {
 }
 
-func subscribePipeline(pipeline string) {
+func subscribePipeline(pipelineName string) {
+}
+
+func createPipeline(pipeparts []string) (string, error) {
+	return "", nil
+}
+
+func tagPipeline(pipeline string) error {
+	return nil
 }

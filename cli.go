@@ -65,8 +65,8 @@ func main() {
 			},
 		},
 		{
-			Name:  "list",
-			Usage: "List local and subscribed pipes",
+			Name:   "list",
+			Usage:  "List local and subscribed pipes",
 			Action: cmdList,
 		},
 		{
@@ -122,24 +122,33 @@ func cmdCreate(c *cli.Context) {
 	if len(c.Args()) == 0 {
 		log.Fatal("No filters specified.")
 	}
-	pipeline := c.Args()[0]
-	if name == "" {
-		name = pipeline
+	pipeline := c.Args()
+
+	plid, err := createPipeline(pipeline)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	createPipeline(pipeline, name)
+	if name != "" {
+		err = tagPipeline(plid)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func cmdImport(c *cli.Context) {
 	if len(c.Args()) == 0 {
 		log.Fatal("No pipeline specified for import.")
 	}
-	pipeline := c.Args()[0]
-	if name == "" {
-		name = pipeline
+	file := c.Args()[0]
+	_, err := importScript(file)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	importScript(pipeline, name)
+	/*if name != "" {
+	        tagFilter(flid)
+	}*/
 }
 
 func cmdExport(c *cli.Context) {
