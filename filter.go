@@ -313,6 +313,19 @@ func createPipeline(pipeparts []string) (string, error) {
 	return "", nil
 }
 
+func removeFilter(filterid string) (error) {
+        path, err := getCachePath(filterid)
+        if err != nil {
+                return err
+        }
+        err = os.Remove(path)
+        if err != nil {
+                return err
+        }
+        return nil
+}
+
+
 func tagPipeline(pipeline string) error {
 	return nil
 }

@@ -35,17 +35,15 @@ func main() {
 		}
 	}
 	app.Commands = []cli.Command{
-		{
+		/*{
 			Name:   "create",
 			Usage:  "Create pipescript in local index.",
 			Action: cmdCreate,
-		},
+		},*/
 		{
 			Name:  "remove",
-			Usage: "Remove pipescript from local index.",
-			Action: func(c *cli.Context) {
-				logrus.Debug("Deleting ", c.Args().First())
-			},
+			Usage: "Remove filter from local index.",
+			Action: cmdRemove,
 		},
 		{
 			Name:   "exec",
@@ -158,6 +156,18 @@ func cmdCreate(c *cli.Context) {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+}
+
+func cmdRemove(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		log.Fatal("No filters specified.")
+	}
+	filter := c.Args()[0]
+
+	err := removeFilter(filter)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
