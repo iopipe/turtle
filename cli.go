@@ -161,13 +161,16 @@ func cmdImport(c *cli.Context) {
 		log.Fatal("No pipeline specified for import.")
 	}
 	file := c.Args()[0]
-	_, err := importScript(file)
+	id, err := importScript(file)
 	if err != nil {
 		log.Fatal(err)
 	}
-	/*if name != "" {
-	        tagFilter(flid)
-	}*/
+	if name != "" {
+		if err = tagFilter(id, name); err != nil {
+			log.Fatal(err)
+		}
+	}
+	println(id)
 }
 
 func cmdExport(c *cli.Context) {
@@ -260,10 +263,15 @@ func cmdExec(c *cli.Context) {
 			}*/
 			filter, err := getFilter(arg)
 			if err != nil {
+				log.Fatal("Filter not found.")
 				return
 			}
 			// Search
-			msg, err = filter(lastObj)
+			if i == 0 {
+				msg, err = filter("")
+			} else {
+				msg, err = filter(lastObj)
+			}
 			if err != nil {
 				log.Fatal(err)
 				return
@@ -273,6 +281,7 @@ func cmdExec(c *cli.Context) {
 
 		if i == len(c.Args()) {
 			println(msg)
+			log.Print(msg)
 			return
 		}
 		lastObj = msg

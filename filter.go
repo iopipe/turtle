@@ -180,6 +180,8 @@ func readFilterCache(name string) ([]byte, error) {
 		return nil, err
 	}
 	script, err := ioutil.ReadFile(diskPath)
+
+	logrus.Debug("Read filter from cache:\n" + string(script[:]))
 	return script[:], nil
 }
 
@@ -213,7 +215,7 @@ func getFilter(filterPath string) (func(input string) (string, error), error) {
 	var err error
 
 	/* Do we have this cached? */
-	if script, err := readFilterCache(filterPath); err != nil {
+	if script, err := readFilterCache(filterPath); err == nil {
 		return makeFilter(string(script[:]))
 	} else {
 		return nil, err
@@ -313,4 +315,17 @@ func createPipeline(pipeparts []string) (string, error) {
 
 func tagPipeline(pipeline string) error {
 	return nil
+}
+
+func tagFilter(filterid string, name string) error {
+	path, err := getCachePath(filterid)
+	if err != nil {
+		return err
+	}
+	destpath, err := getCachePath(name)
+	if err != nil {
+		return err
+	}
+	err = os.Symlink(path, destpath)
+	return err
 }
