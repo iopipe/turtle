@@ -19,12 +19,18 @@ function httpCallback(u, done) {
   return function() {
     if (arguments.length === 0) {
       request.get({url: url.format(u), strictSSL: true }, function(error, response, body) {
+        if (error || response.statusCode != 200) {
+          throw "HTTP response != 200"
+        }
         done(body)
       })
     } else {
       prevResult = arguments[0]
       request.post({url: url.format(u), body: prevResult, strictSSL: true },
                     function(error, response, body) {
+                      if (error || response.statusCode != 200) {
+                        throw "HTTP response != 200"
+                      }
                       done(body)
                     })
     }
@@ -38,14 +44,13 @@ function pipescriptCallback(id, done) {
   var input = ""
   var svm = vm.Script(script)
 
-  return function(prevResult) {
-    console.log("Running script")
+  return function() {
     var prevResult = ""
     if (arguments.length > 0) {
       prevResult = arguments[0]
     }
-    var result = svm.runInNewContext({ input: prevResult })
-    console.log("Done: " + result)
+    var sandbox = { input: prevResult }
+    var result = svm.runInNewContext(sandbox)
     return done(result)
   }
 }
