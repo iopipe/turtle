@@ -27,10 +27,23 @@ type filterTuple struct {
 	toObjType   string
 }
 
-func listScripts() {
-	/*open()
-	read()
-	fancyOutput()*/
+func listScripts() ([]string, error) {
+	var results []string
+
+	myuser, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
+	path := path.Join(pathParts...)
+	fi, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range fi {
+		results = append(results, file.Name())
+	}
+	return results, nil
 }
 
 func exportScript(pipeline string, name string) {
@@ -132,7 +145,7 @@ func writeCache(body []byte) (string, error) {
 
 	/* Verify digest */
 	chksum := sha256.Sum256(body[:])
-	id := fmt.Sprintf("%h", chksum)
+	id := fmt.Sprintf("%x", chksum)
 	diskPath, err := getCachePath(id)
 	if err != nil {
 		return id, err
@@ -146,14 +159,11 @@ func writeCache(body []byte) (string, error) {
 }
 
 func getCachePath(name string) (string, error) {
-	reqPathParts := strings.Split(name, "/")
-
 	myuser, err := user.Current()
 	if err != nil {
 		return "", err
 	}
-	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
-	pathParts = append(pathParts, reqPathParts...)
+	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache", name}
 	return path.Join(pathParts...), nil
 }
 

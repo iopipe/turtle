@@ -65,6 +65,18 @@ func main() {
 			},
 		},
 		{
+			Name:   "import",
+			Usage:  "Import will bring a filter in from a javascript file or STDIN for -",
+			Action: cmdImport,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:        "name",
+					Usage:       "Tag to name",
+					Destination: &name,
+				},
+			},
+		},
+		{
 			Name:   "list",
 			Usage:  "List local and subscribed pipes",
 			Action: cmdList,
@@ -95,6 +107,13 @@ func main() {
 }
 
 func cmdList(c *cli.Context) {
+	list, err := listScripts()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, name := range list {
+		println(name)
+	}
 }
 
 func cmdLogin(c *cli.Context) {
