@@ -255,12 +255,6 @@ func cmdExec(c *cli.Context) {
 				}
 			}
 		} else {
-			// Search
-			/*msg, err = execFilter(lastObj, arg)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}*/
 			filter, err := getFilter(arg)
 			if err != nil {
 				log.Fatal("Filter not found.")
