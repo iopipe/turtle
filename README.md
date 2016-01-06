@@ -19,20 +19,23 @@ Usage
 ### Command-line
 
 ```sh
-# Fetch a web service response (Curl-like usage)
-$ iopipe fetch http://localhost/some-request
+# Import a pipescript and name it com.example.SomeScript
+$ iopipe import --name com.example.SomeScript - <<<'input'
 
-# Fetch response and convert to an object (to stdout)
-$ iopipe --debug exec http://localhost/some-request com.example.SomeObject
+# List pipescripts
+$ iopipe list
 
-# Fetch response and convert to an object, sending SomeObject to otherhost.
-$ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
+# Fetch response and process it with com.example.SomeScript
+$ iopipe --debug exec http://localhost/some-request com.example.SomeScript
+
+# Fetch response and convert it with SomeScript, sending the result to otherhost
+$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
                       http://otherhost/request
 
-# Fetch response and convert to an object, sending SomeObject to otherhost,
-# & converting the response into a ResponseObject
-$ iopipe --debug exec http://localhost/some-request com.example.SomeObject \
-                      http://otherhost/request some.example.ResponseObject
+# Fetch response and convert it with SomeScript, send thta result to otherhost,
+# & converting the response with the script ResponseScript
+$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
+                      http://otherhost/request some.example.ResponseScript
 ```
 
 ### NodeJS SDK:
@@ -44,8 +47,9 @@ receive the return of the previous function call or HTTP body.
 ```javascript
 var iopipe = require("iopipe")
 
+// Where com.example.SomeScript is present in .iopipe/filter_cache/
 iopipe.exec("http://localhost/get-request",
-            "com.example.SomeObject",
+            "com.example.SomeScript",
             "http://otherhost.post")
 
 // Users may chain functions and HTTP requests.
