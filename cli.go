@@ -102,6 +102,11 @@ func main() {
 				logrus.Debug("Pulling ", c.Args().First())
 			},
 		},
+		{
+			Name:   "tag",
+			Usage:  "Tag a pipescript or pipeline to a name",
+			Action: cmdTag,
+		},
 	}
 	app.Run(os.Args)
 }
@@ -183,6 +188,19 @@ func cmdExport(c *cli.Context) {
 	}
 
 	exportScript(pipeline, name)
+}
+
+func cmdTag(c *cli.Context) {
+	var err error
+
+	id := c.Args()[0]
+	name := c.Args()[1]
+	if name == "" {
+		log.Fatal("Invalid name")
+	}
+	if err = tagFilter(id, name); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func execFilter(lastObj string, toObjType string) (msg string, err error) {
@@ -273,7 +291,7 @@ func cmdExec(c *cli.Context) {
 		}
 		logrus.Debug(fmt.Sprintf("pipe[%i][raw]: %s\n", i, msg))
 
-		if i == len(c.Args()) - 1 {
+		if i == len(c.Args())-1 {
 			println(msg)
 			return
 		}
