@@ -7,6 +7,7 @@ var url = require('url')
 var request = require("request")
 var util = require('util')
 var vm = require('vm')
+var fs = require('fs')
 
 function funcCallback(call, done) {
   return function() {
@@ -30,42 +31,48 @@ function httpCallback(u, done) {
   }
 }
 
+function pipescriptCallback(id, done) {
+  // Pull from index (or use cached pipescripts)
+  /* download script */
+  var script = fs.readFileSync(".iopipe/filter_cache/" + id)
+  var input = ""
+  var svm = vm.Script(script)
+
+  return function(prevResult) {
+    console.log("Running script")
+    var prevResult = ""
+    if (arguments.length > 0) {
+      prevResult = arguments[0]
+    }
+    var result = svm.runInNewContext({ input: prevResult })
+    console.log("Done: " + result)
+    return done(result)
+  }
+}
+
 exports.define = function() {
   var callbackList = []
   var nextCallback;
-  var lastCallback = function(result) { console.log(result) };
+  var done = function(result) { console.log(result) };
 
   for (var i = arguments.length - 1; i > -1; i--) {
     var arg = arguments[i];
 
     if (typeof arg === "function") {
-      nextCallback = funcCallback(arg, lastCallback)
+      nextCallback = funcCallback(arg, done)
     } else if (typeof(arg) === "string") {
       var u = url.parse(arg);
 
       if (u.protocol === 'http:' || u.protocol === 'https:') {
         var server = u.hostname
-        nextCallback = httpCallback(u, lastCallback)
+        nextCallback = httpCallback(u, done)
       } else {
-         // Pull from index (or use cached pipescripts)
-         /* download script */
-         var script = ""
-         if (i === 0) {
-           nextCallback = function() {
-             return lastCallback(vm.runInNewContext(script))
-           };
-         } else {
-           nextCallback = function(prevResult) {
-             return lastCallback(vm.runInNewContext(script, {
-               input: prevResult
-             }))
-           }
-         }
+        nextCallback = pipescriptCallback(arg, done)
       }
     } else {
-      console.log("WARNING: skipping unknown argument: " + arg)
+      throw new Error("ERROR: unknown argument: " + arg)
     }
-    lastCallback = nextCallback
+    done = nextCallback
   }
   return nextCallback
 }
