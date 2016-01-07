@@ -12,6 +12,8 @@ can transform responses into JSON documents.
 Web services may be placed anywhere within a pipeline, allowing
 transformations (and code execution) to happen on both client & server.
 
+![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
+
 ---------------------------------------
 Usage
 ---------------------------------------
