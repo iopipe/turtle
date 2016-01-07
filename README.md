@@ -32,7 +32,7 @@ $ iopipe --debug exec http://localhost/some-request com.example.SomeScript
 $ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
                       http://otherhost/request
 
-# Fetch response and convert it with SomeScript, send thta result to otherhost,
+# Fetch response and convert it with SomeScript, send that result to otherhost,
 # & converting the response with the script ResponseScript
 $ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
                       http://otherhost/request some.example.ResponseScript
@@ -77,7 +77,7 @@ server-side. Pipescript may also be used to build serverside filters
 and applications.
 
 For writing filters see:
-***https://github.com/ewindisch/iopipe/blob/master/docs/pipescript.md***
+***https://github.com/iopipe/iopipe/blob/master/docs/pipescript.md***
 
 ---------------------------------------
 Build & Install from source
