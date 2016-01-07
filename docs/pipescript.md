@@ -73,16 +73,3 @@ by JSON Hyper-Schema which describes the properties of an Object.
 
 ```
 
------------------------
-Server-side pipescripts
------------------------
-
-Users may pipe data into any web service and transform their responses. However,
-it's also possible for web services to return native *iopipe* Objects. Furthermore,
-to simplify this, web services may deploy pipescripts as a service using the
-*pipe-service* project.
-
-For downloads and documentation, visit the *pipe-service* GitHub page:
-
-	https://github.com/ewindisch/pipe-service
-
