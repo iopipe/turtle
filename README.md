@@ -7,7 +7,7 @@ The IOPIPE cli tool uses pipescripts, javascript-based microservices,
 to simplify the consumption and integration of web services.
 
 Pipescripts can transform data into web service requests and
-can transform responses into JSON documents.
+can transform responses.
 
 Web services may be placed anywhere within a pipeline, allowing
 transformations (and code execution) to happen on both client & server.
