@@ -18,6 +18,14 @@ transformations (and code execution) to happen on both client & server.
 Usage
 ---------------------------------------
 
+### Binary installation using Docker:
+
+```bash
+$ docker pull iopipe/iopipe:trunk
+$ eval $(echo "alias iopipe='docker run --rm -it iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
+$ iopipe --help
+```
+
 ### Command-line
 
 ```sh
