@@ -18,7 +18,7 @@ transformations (and code execution) to happen on both client & server.
 Usage
 ---------------------------------------
 
-### Binary installation using Docker:
+### CLI binary installation using Docker:
 
 ```bash
 $ docker pull iopipe/iopipe:trunk
