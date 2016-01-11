@@ -1,12 +1,14 @@
 {
   "name": "iopipe",
-  "private": true,
-  "version": "0.0.1",
+  "private": false,
+  "version": "0.0.2",
   "description": "iopipe sdk",
   "author": "Eric Windisch",
+  "files": [ "js" ],
   "dependencies": {
     "read-stream": "",
     "request": ""
   },
-  "main": "./iopipe.js"
+  "main": "js/iopipe.js",
+  "license": "Apache-2.0"
 }
