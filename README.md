@@ -74,6 +74,9 @@ var f = iopipe.define("http://fetch", "https://post")
 f()
 ```
 
+For more information on using the NodeJS SDK, please refer to its documentation:
+***https://github.com/iopipe/iopipe/blob/master/docs/nodejs.md***
+
 ---------------------------------------
 Filters & Pipescript
 ---------------------------------------
