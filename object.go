@@ -17,10 +17,6 @@ type objectInterface struct {
 	Properties map[string]interface{} `json:"properties"`
 }
 
-type MetaObject struct {
-	objtype []string
-}
-
 type Object struct {
 	path *url.URL
 }
@@ -55,11 +51,4 @@ func (object *Object) update(content string) string {
 		log.Fatal(err)
 	}
 	return string(body[:])
-}
-
-type ObjPath struct {
-	host   string
-	scheme string
-	uri    string
-	query  []string
 }
