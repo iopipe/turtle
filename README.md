@@ -1,16 +1,17 @@
----------------------------------------
-IOPIPE
+IOpipe
 ---------------------------------------
 Apache 2.0 licensed.
 
-The IOPIPE cli tool uses pipescripts, javascript-based microservices,
-to simplify the consumption and integration of web services.
+IOpipe simplifies the consumption and integration of web services through
+the chaining of pipescripts, javascript-based microservices.
 
-Pipescripts can transform data into web service requests and
-can transform responses.
+Pipescripts take and transform input, providing straight-forward output
+in a fashion to Unix pipes. Scripts may receive input or send output to/from
+web service requests, functions, or local applications.
 
-Web services may be placed anywhere within a pipeline, allowing
-transformations (and code execution) to happen on both client & server.
+Scripts may be embedded in applications, used from shell scripts, or run manually
+via a CLI. Because pipescript is Javascript, embedding is possible with most
+languages and made safe through sandboxing.
 
 ![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
 
