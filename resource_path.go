@@ -1,20 +1,18 @@
 package main
 
 import (
-	"log"
 	"net/url"
 )
 
-// Create an ObjPath from a string
-func dereferencePath(reqPath string) *url.URL {
+func dereferencePath(reqPath string) (*url.URL, error) {
 	path, err := url.Parse(reqPath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if path.Scheme == "" {
 		path.Scheme = "https"
 	}
-	return path
+	return path, nil
 }
 
 // Download resource at path &

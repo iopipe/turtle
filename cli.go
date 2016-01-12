@@ -41,8 +41,8 @@ func main() {
 			Action: cmdCreate,
 		},*/
 		{
-			Name:  "remove",
-			Usage: "Remove filter from local index.",
+			Name:   "remove",
+			Usage:  "Remove filter from local index.",
 			Action: cmdRemove,
 		},
 		{
@@ -250,7 +250,11 @@ func cmdExec(c *cli.Context) {
 		logrus.Info("pipe[arg]: " + arg)
 
 		if path.Scheme == "http" || path.Scheme == "https" {
-			argPath := dereferencePath(arg)
+			argPath, err := dereferencePath(arg)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
 			argObj := dereferenceObj(argPath)
 
 			// If first argument, then we must GET,
