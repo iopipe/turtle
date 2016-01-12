@@ -19,13 +19,21 @@ languages and made safe through sandboxing.
 Usage
 ---------------------------------------
 
-### CLI binary installation using Docker:
+### Installation:
+
+Download the [latest binary release](https://github.com/iopipe/iopipe/releases) and chmod 755 the file.
+
+Building from source? See [Build & Install from source](#build--install-from-source).
+
+Alternatively, download & alias our Docker image:
 
 ```bash
 $ docker pull iopipe/iopipe:trunk
-$ eval $(echo "alias iopipe='docker run --rm -it iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
+$ eval $(echo "alias iopipe='docker run --rm -it -v $HOME:/root iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
 $ iopipe --help
 ```
+
+OS-specific packages are forthcoming.
 
 ### Command-line
 
