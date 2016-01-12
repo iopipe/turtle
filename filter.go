@@ -30,10 +30,12 @@ type filterTuple struct {
 func listScripts() ([]string, error) {
 	var results []string
 
-	path, err := getCachePath("")
+	myuser, err := user.Current()
 	if err != nil {
 		return nil, err
 	}
+	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
+	path := path.Join(pathParts...)
 	fi, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -311,17 +313,18 @@ func createPipeline(pipeparts []string) (string, error) {
 	return "", nil
 }
 
-func removeFilter(filterid string) error {
-	path, err := getCachePath(filterid)
-	if err != nil {
-		return err
-	}
-	err = os.Remove(path)
-	if err != nil {
-		return err
-	}
-	return nil
+func removeFilter(filterid string) (error) {
+        path, err := getCachePath(filterid)
+        if err != nil {
+                return err
+        }
+        err = os.Remove(path)
+        if err != nil {
+                return err
+        }
+        return nil
 }
+
 
 func tagPipeline(pipeline string) error {
 	return nil
