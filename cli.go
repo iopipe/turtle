@@ -18,6 +18,8 @@ var debug bool = false
 var name string
 
 func main() {
+	ensureCachePath()
+
 	//var debug bool = false
 	app := cli.NewApp()
 	app.Name = "iopipe"

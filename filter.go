@@ -165,6 +165,14 @@ func getCachePath(name string) (string, error) {
 	return path.Join(pathParts...), nil
 }
 
+func ensureCachePath() error {
+	path, err := getCachePath("")
+	if err != nil {
+		return err
+	}
+	return os.MkdirAll(path, 0700)
+}
+
 func readFilterCache(name string) ([]byte, error) {
 	var err error
 
