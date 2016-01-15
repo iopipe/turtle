@@ -98,7 +98,15 @@ upon locally in the client, whereas web-service based filters operate
 server-side. Pipescript may also be used to build serverside filters
 and applications.
 
-For writing filters see:
+Example:
+
+```javascript
+export.module = function(input) {
+  return "I'm doing something with input: {0}".format(input)
+}
+```
+
+For more on writing filters see:
 ***https://github.com/iopipe/iopipe/blob/master/docs/pipescript.md***
 
 ---------------------------------------

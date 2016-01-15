@@ -101,9 +101,19 @@ func makeFilter(script string) (func(input string) (string, error), error) {
 		logrus.Debug("Adding RequireJS")
 		vm.Run(rjs)
 
-		vm.Set("input", input)
 		logrus.Debug("Executing script: " + script)
-		val, err := vm.Run(script)
+                _, err := vm.Run(`
+                        var module = { "exports": function() { } }
+                `)
+                if err != nil {
+                        return "", err
+                }
+		_, err = vm.Run(script)
+		if err != nil {
+			return "", err
+		}
+		vm.Set("input", input)
+                val, err := vm.Run("module.exports(input)")
 		if err != nil {
 			return "", err
 		}

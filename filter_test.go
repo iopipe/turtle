@@ -5,7 +5,7 @@ import (
 )
 
 func TestMakeRunFilter(t *testing.T) {
-	fun, err := makeFilter("\"hello\"")
+	fun, err := makeFilter("module.exports = function(x) { return \"hello\" }")
 	if err != nil {
 		t.Error(err)
 	}
@@ -16,7 +16,7 @@ func TestMakeRunFilter(t *testing.T) {
 }
 
 func TestMakeRunEchoFilter(t *testing.T) {
-	fun, err := makeFilter("input")
+	fun, err := makeFilter("module.exports = function(input) { return input }")
 	if err != nil {
 		t.Error(err)
 	}
