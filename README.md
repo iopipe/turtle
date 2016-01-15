@@ -93,7 +93,7 @@ and applications.
 Example:
 
 ```javascript
-export.module = function(input) {
+module.exports = function(input) {
   return "I'm doing something with input: {0}".format(input)
 }
 ```
