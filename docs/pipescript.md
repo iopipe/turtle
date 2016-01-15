@@ -1,19 +1,25 @@
 Pipescript is a subset of ECMAScript / Javascript.
 
-Scripts initiate with a variable predefined, 'input',
-containing input bytes to be parsed. Each script is associated
-with a pre-defined input and output type.
+Scripts are written in CommonJS module format in that they expect
+a function defined as 'module.exports'. This function should return
+a result intended for the next pipescript, function, or HTTP endpoint.
+
+Currently, a single argument and single string-type return variable
+are supported.
 
 ------------------
 Example pipescript
 ------------------
 
-The following converts a GenericMessage into a Twitter status update request:
+The following converts a JSON document representing a "GenericMessage"
+into a Twitter status update request (as expected by the Twitter API).
 
 ```javascript
-var obj = JSON.parse(input);
-var statusRequest = {
-  "status": obj["properties"]["text"]
-};
-JSON.stringify(statusRequest);
+module.exports = function(input) {
+  var obj = JSON.parse(input)
+  var statusRequest = {
+    "status": obj["properties"]["text"]
+  }
+  return JSON.stringify(statusRequest)
+}
 ```
