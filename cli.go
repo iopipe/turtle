@@ -4,14 +4,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
-	"fmt"
 	"log"
 	"os"
 	"path"
 
 	"encoding/json"
-	"io/ioutil"
-	"net/url"
 )
 
 var debug bool = false
@@ -233,84 +230,14 @@ func execFilter(lastObj string, toObjType string) (msg string, err error) {
 
 // Handle the 'exec' CLI command.
 func cmdExec(c *cli.Context) {
+	var msg string
+	var err error
 	if debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-
-	//var err error
-	var lastObj string
-
-	for i := 0; i < len(c.Args()); i++ {
-		arg := c.Args()[i]
-		var msg string
-
-		path, err := url.Parse(arg)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		logrus.Info("pipe[arg]: " + arg)
-
-		if path.Scheme == "http" || path.Scheme == "https" {
-			argPath, err := dereferencePath(arg)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			argObj := dereferenceObj(argPath)
-
-			// If first argument, then we must GET,
-			// note that this case follows the '-' so all
-			// shell input will pipe into the POST.
-			if i == 0 {
-				msg = argObj.read()
-			} else {
-				msg = argObj.update(lastObj)
-			}
-		} else if arg == "-" {
-			script, err := ioutil.ReadAll(os.Stdin)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			if i == 0 {
-				// If first argument, assume is generic bytes input.
-				msg = string(script[:])
-			} else {
-				// If not the first argument, then expect pipescript
-				filter, err := makeFilter(string(script[:]))
-				if err != nil {
-					log.Fatal(err)
-					return
-				}
-				if msg, err = filter(lastObj); err != nil {
-					log.Fatal(err)
-					return
-				}
-			}
-		} else {
-			filter, err := getFilter(arg)
-			if err != nil {
-				log.Fatal("Filter not found.")
-				return
-			}
-			// Search
-			if i == 0 {
-				msg, err = filter("")
-			} else {
-				msg, err = filter(lastObj)
-			}
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-		}
-		logrus.Debug(fmt.Sprintf("pipe[%i][raw]: %s\n", i, msg))
-
-		if i == len(c.Args())-1 {
-			println(msg)
-			return
-		}
-		lastObj = msg
+	if msg, err = Exec(c.Args()...); err != nil {
+		log.Fatal(err)
+		return
 	}
+	println(msg)
 }
