@@ -102,18 +102,18 @@ func makeFilter(script string) (func(input string) (string, error), error) {
 		vm.Run(rjs)
 
 		logrus.Debug("Executing script: " + script)
-                _, err := vm.Run(`
+		vm.Set("msg", input)
+		_, err := vm.Run(`
                         var module = { "exports": function() { } }
                 `)
-                if err != nil {
-                        return "", err
-                }
+		if err != nil {
+			return "", err
+		}
 		_, err = vm.Run(script)
 		if err != nil {
 			return "", err
 		}
-		vm.Set("input", input)
-                val, err := vm.Run("module.exports(input)")
+		val, err := vm.Run("module.exports(msg)")
 		if err != nil {
 			return "", err
 		}
