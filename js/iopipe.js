@@ -42,15 +42,17 @@ function pipescriptCallback(id, done) {
   /* download script */
   var script = fs.readFileSync(".iopipe/filter_cache/" + id)
   var input = ""
-  var svm = vm.Script(script)
 
   return function() {
     var prevResult = ""
     if (arguments.length > 0) {
       prevResult = arguments[0]
     }
-    var sandbox = { input: prevResult }
-    var result = svm.runInNewContext(sandbox)
+    var sandbox = { "module": { "exports": function () {} }, "msg": prevResult }
+    var ctx = vm.createContext(sandbox)
+    vm.runInContext(script, ctx)
+    var result = vm.runInContext("module.exports(msg)", ctx)
+
     return done(result)
   }
 }
