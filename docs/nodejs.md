@@ -93,8 +93,10 @@ Modifying the previous example to convert the inline function to a pipescript:
 $ # Write a pipescript file via the shell:
 $ mkdir -p .iopipe/filter_cache/
 $ cat <<EOF >.iopipe/filter_cache/myscript
-var x = JSON.decode(input)
-return x["field"]
+module.exports = function(input) {
+  var x = JSON.decode(input)
+  return x["field"]
+}
 EOF
 ```
 
