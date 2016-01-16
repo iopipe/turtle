@@ -30,7 +30,7 @@ Alternatively, download & alias our Docker image:
 ```bash
 $ docker pull iopipe/iopipe:trunk
 $ docker run --name iopipe-data iopipe/iopipe:trunk
-$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
+$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
 $ iopipe --help
 ```
 
