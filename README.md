@@ -80,6 +80,11 @@ iopipe.exec(function() { return "something" },
 // A function may also be returned then executed later.
 var f = iopipe.define("http://fetch", "https://post")
 f()
+
+// A defined function also accepts parameters
+var echo = require("iopipe-echo")
+var f = iopipe.define(echo, console.log)
+f("hello world")
 ```
 
 For more information on using the NodeJS SDK, please refer to its documentation:
