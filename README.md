@@ -125,16 +125,19 @@ Project goals
 ---------------------------------------
 
 The principal goal of our project is to improve
-human to machine and machine to machine communications
-with a free, highly-distributed protocol.
+human to machine and machine to machine communication.
+We believe this can be achieved without the creation
+or use of new protocols, but through the use of
+a flow-based programming model.
 
 Furthermore:
 
-1. Support simple translation of existing APIs
-2. Support native, greenfield applications
+1. Simplify the use and integration of existing APIs into
+   user applications.
+2. Support use by both existing and new applications.
 3. Design for an open and distributed web.
 4. Permissive open source licensing.
-5. Security. Security. Security.
+5. Secure sharing, execution, & communications.
 
 ---------------------------------------
 Scaling
@@ -154,10 +157,13 @@ these services, as is standard practice with
 web and cloud services.
 
 Pipescripts are executed in individual
-javascript VMs whenever allowed by the host
-system. Users should still exercise caution
-when running pipescripts provided by other
-users.
+javascript VMs whenever allowed by the executing
+environment. Users should exercise caution
+when running community created pipescripts.
+
+It is a project priority to make fetching, publishing,
+and execution of pipescripts secure for a
+production-ready 1.0.0 release.
 
 Contact security@iopipe.com for questions.
 
