@@ -29,7 +29,8 @@ Alternatively, download & alias our Docker image:
 
 ```bash
 $ docker pull iopipe/iopipe:trunk
-$ eval $(echo "alias iopipe='docker run --rm -it -v $HOME:/root iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
+$ docker run --name iopipe-data iopipe/iopipe:trunk
+$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
 $ iopipe --help
 ```
 
@@ -129,7 +130,8 @@ Alternatively use Docker to build & deploy:
 
 ```bash
 $ docker build -t iopipe-dev .
-$ eval $(echo "alias iopipe='docker run --rm -it iopipe-dev'" | tee -a ~/.bashrc)
+$ docker run --name iopipe-data iopipe-dev
+$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe-dev'" | tee -a ~/.bashrc)
 $ iopipe --help
 ```
 
