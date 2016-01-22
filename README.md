@@ -14,6 +14,7 @@ via a CLI. Because pipescript is Javascript, embedding is possible with most
 languages and made safe through sandboxing.
 
 ![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
+[![Coverage Status](https://coveralls.io/repos/github/iopipe/iopipe/badge.svg?branch=master&t=UYi1cn)](https://coveralls.io/github/iopipe/iopipe?branch=master)
 
 ---------------------------------------
 Usage
