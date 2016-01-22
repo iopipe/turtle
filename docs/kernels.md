@@ -1,14 +1,16 @@
-Pipescript is a subset of ECMAScript / Javascript.
+Kernels must currently be written in a subset of ECMAScript / Javascript.
+Future versions of IOpipe may allow kernels to be developed in
+other languages, or to run binary kernels.
 
-Scripts are written in CommonJS module format in that they expect
-a function defined as 'module.exports'. This function should return
-a result intended for the next pipescript, function, or HTTP endpoint.
+A CommonJS module format is employed, expecting a function defined
+as 'module.exports'. This function should return a result intended
+for the next kernel, function, or HTTP endpoint.
 
 Currently, a single argument and single string-type return variable
 are supported.
 
 ------------------
-Example pipescript
+Example kernel
 ------------------
 
 The following converts a JSON document representing a "GenericMessage"

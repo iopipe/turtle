@@ -3,14 +3,14 @@
 IOpipe simplifies the consumption and integration of
 web services. The NodeJS SDK allows the chaining of 
 web service / HTTP requests, local functions, and
-pipescripts.
+kernels.
 
-Pipescripts are portable javascript snippets that take
+Kernels are portable javascript snippets that take
 a single string argument and return a string. These
-pipescripts may be written and used locally, shared
+kernels may be written and used locally, shared
 amongst the community, or shared privately within a team.
 
-Because pipescripts define their input and output types,
+Because kernels define their input and output types,
 it is easy for developers to discover and build
 request/response workflows which automatically build
 API requests and transform responses.
@@ -24,7 +24,7 @@ $ npm install -g iopipe
 ```
 
 Typically, users will use the command-line tool to create, download,
-share, and manage pipescripts. The tool may be used to seed a filter cache
+share, and manage kernels. The tool may be used to seed a filter cache
 for embedding into your NodeJS project or to export complete  npm-compatible
 packages.
 
@@ -81,16 +81,16 @@ iopipe.exec(
 )
 ```
 
-# Leveraging pipescript
+# Leveraging kernels
 
 Functions need not be inlined, in fact the greatest value of IOpipe
-is in using stored pipescript routines. These allow sharing of functional,
+is in using stored kernels. These allow sharing of functional,
 lambda-like methods to transform requests.
 
-Modifying the previous example to convert the inline function to a pipescript:
+Modifying the previous example to convert the inline function to a kernel:
 
 ```bash
-$ # Write a pipescript file via the shell:
+$ # Write a kernel via the shell:
 $ mkdir -p .iopipe/filter_cache/
 $ cat <<EOF >.iopipe/filter_cache/myscript
 module.exports = function(input) {
