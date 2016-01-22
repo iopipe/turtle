@@ -178,7 +178,7 @@ virtual machine. Users should exercise caution
 when running community created kernels.
 
 It is a project priority to make fetching, publishing,
-and execution of pipescripts secure for a
+and execution of kernels secure for a
 production-ready 1.0.0 release.
 
 Contact security@iopipe.com for questions.
