@@ -3,15 +3,15 @@ IOpipe
 Apache 2.0 licensed.
 
 IOpipe simplifies the consumption and integration of web services through
-the chaining of pipescripts, javascript-based microservices.
+the chaining of kernels, single-function applications.
 
-Pipescripts take and transform input, providing straight-forward output
-in a fashion to Unix pipes. Scripts may receive input or send output to/from
+Kernels take and transform input, providing straight-forward output
+in a fashion to Unix pipes. A kernel may receive input or send output to/from
 web service requests, functions, or local applications.
 
-Scripts may be embedded in applications, used from shell scripts, or run manually
-via a CLI. Because pipescript is Javascript, embedding is possible with most
-languages and made safe through sandboxing.
+IOpipe may be embedded in applications, used from shell scripts, or run manually
+via a CLI to form complete applications. Kernels and pipelines may be run
+within local processes, or dispatched to remote workers (i.e. "cloud").
 
 ![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
 [![Coverage Status](https://coveralls.io/repos/github/iopipe/iopipe/badge.svg?branch=master&t=UYi1cn)](https://coveralls.io/github/iopipe/iopipe?branch=master)
@@ -40,10 +40,10 @@ OS-specific packages are forthcoming.
 ### Command-line
 
 ```sh
-# Import a pipescript and name it com.example.SomeScript
+# Import a kernel and name it com.example.SomeScript
 $ iopipe import --name com.example.SomeScript - <<<'input'
 
-# List pipescripts
+# List kernels
 $ iopipe list
 
 # Fetch response and process it with com.example.SomeScript
@@ -62,7 +62,7 @@ $ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
 ### NodeJS SDK:
 
 The NodeJS SDK provides a generic callback chaining mechanism which allows
-mixing HTTP(S) requests/POSTs, function calls, and pipescripts. Callbacks
+mixing HTTP(S) requests/POSTs, function calls, and kernels. Callbacks
 receive the return of the previous function call or HTTP body.
 
 ```javascript
@@ -93,17 +93,14 @@ For more information on using the NodeJS SDK, please refer to its documentation:
 ***https://github.com/iopipe/iopipe/blob/master/docs/nodejs.md***
 
 ---------------------------------------
-Filters & Pipescript
+Kernels
 ---------------------------------------
 
-Requests and responses and translated using filters written in
-Pipescript (i.e. Javascript) or offered as web services.
+Requests and responses are translated using kernels, and
+may pipe to other kernels, or to/from web service endpoints.
 
-All filters simply receive request or response data and output
-translated request or response data. Pipescript is typically operated
-upon locally in the client, whereas web-service based filters operate
-server-side. Pipescript may also be used to build serverside filters
-and applications.
+Kernels simply receive request or response data and output
+translated request or response data.
 
 Example:
 
@@ -114,7 +111,7 @@ module.exports = function(input) {
 ```
 
 For more on writing filters see:
-***https://github.com/iopipe/iopipe/blob/master/docs/pipescript.md***
+***https://github.com/iopipe/iopipe/blob/master/docs/kernels.md***
 
 ---------------------------------------
 Build & Install from source
@@ -172,10 +169,13 @@ web services. Caution is advised when trusting
 these services, as is standard practice with
 web and cloud services.
 
-Pipescripts are executed in individual
-javascript VMs whenever allowed by the executing
-environment. Users should exercise caution
-when running community created pipescripts.
+Kernels are executed in individual virtual machines
+whenever allowed by the executing environment.
+The definition of a virtual machine here is lax,
+such that it may describe a Javascript VM,
+a Linux container, or a hardware-assisted x86
+virtual machine. Users should exercise caution
+when running community created kernels.
 
 It is a project priority to make fetching, publishing,
 and execution of pipescripts secure for a
