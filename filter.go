@@ -6,17 +6,14 @@ import (
 
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"path"
-	"strings"
 
 	"crypto/sha256"
 	"io/ioutil"
 	"net/http"
-	"os/user"
 )
 
 const FILTER_BASE string = "http://192.241.174.50/filters/"
@@ -148,59 +145,6 @@ func fetchFilter(filterPath string) ([]byte, error) {
 	return body, nil
 }
 
-func writeCache(body []byte) (string, error) {
-	var err error
-
-	/* Verify digest */
-	chksum := sha256.Sum256(body[:])
-	id := fmt.Sprintf("%x", chksum)
-	diskPath, err := getCachePath(id)
-	if err != nil {
-		return id, err
-	}
-
-	/* Write cache */
-	if err = ioutil.WriteFile(diskPath, body, 0600); err != nil {
-		return id, err
-	}
-	return id, nil
-}
-
-func getCachePath(name string) (string, error) {
-	myuser, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache", name}
-	return path.Join(pathParts...), nil
-}
-
-func ensureCachePath() error {
-	path, err := getCachePath("")
-	if err != nil {
-		return err
-	}
-	return os.MkdirAll(path, 0700)
-}
-
-func readFilterCache(name string) ([]byte, error) {
-	var err error
-
-	diskPath, err := getCachePath(name)
-	if err != nil {
-		return nil, err
-	}
-
-	/* Do we have this cached? */
-	if _, err = os.Stat(diskPath); err != nil {
-		return nil, err
-	}
-	script, err := ioutil.ReadFile(diskPath)
-
-	logrus.Debug("Read filter from cache:\n" + string(script[:]))
-	return script[:], nil
-}
-
 func importScript(file string) (string, error) {
 	var err error
 	var fH io.Reader
@@ -219,7 +163,7 @@ func importScript(file string) (string, error) {
 		return "", err
 	}
 
-	id, err := writeCache(body[:])
+	id, err := writeFilterCache(body[:])
 	if err != nil {
 		return id, err
 	}
@@ -241,7 +185,7 @@ func getFilter(filterPath string) (func(input string) (string, error), error) {
 	if script, err = fetchFilter(filterPath); err != nil {
 		return nil, err
 	}
-	if _, err = writeCache(script); err != nil {
+	if _, err = writeFilterCache(script); err != nil {
 		return nil, err
 	}
 
@@ -251,29 +195,27 @@ func getFilter(filterPath string) (func(input string) (string, error), error) {
 func getPipeline(filterPath string) (func(input string) (string, error), error) {
 	var script []byte
 	var err error
-	reqPathParts := strings.Split(filterPath, "/")
-	myuser, err := user.Current()
+
+	diskPath, err := getCachePath("")
 	if err != nil {
 		return nil, err
 	}
-	pathParts := []string{myuser.HomeDir, ".iopipe", "filter_cache"}
-	pathParts = append(pathParts, reqPathParts...)
-	diskPath := path.Join(pathParts...)
-	//myuser.HomeDir, ".iopipe", "filter_cache", pathParts...)
 
 	/* Do we have this cached? */
 	if _, err := os.Stat(diskPath); err == nil {
 		script, err = ioutil.ReadFile(diskPath)
 		return makeFilter(string(script[:]))
 	}
+
 	/* If not, fetch */
 	if script, err = fetchFilter(filterPath); err != nil {
 		return nil, err
 	}
 	/* Write cache */
-	if err = ioutil.WriteFile(diskPath, script, 0600); err != nil {
+	if _, err = writeFilterCache(script); err != nil {
 		return nil, err
 	}
+
 	return makeFilter(string(script[:]))
 }
 
