@@ -94,5 +94,28 @@ exports.define = function() {
 
 exports.exec = function() {
   var l = [].slice.call(arguments)
-  exports.define.apply(this, l)()
+  return exports.define.apply(this, l)()
+}
+
+exports.property = function (index) {
+  return function (obj) {
+    return obj[index]
+  }
+}
+
+exports.bind = function (method, arg) {
+  return function (obj) {
+    return obj[method].apply(obj, [].slice.call(arguments).slice(1))
+  }
+}
+
+exports.map = function (fun) {
+  return function(input) {
+    return input.map(fun)
+  }
+}
+exports.reduce = function(fun) {
+  return function(input) {
+    return input.reduce(fun)
+  }
 }
