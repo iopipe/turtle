@@ -18,7 +18,11 @@ function funcCallback(call, done) {
 function httpCallback(u, done) {
   return function() {
     if (arguments.length === 0) {
-      request.get({url: url.format(u), strictSSL: true }, function(error, response, body) {
+      request.get({url: url.format(u), strictSSL: true,
+                   headers: {
+                     "User-Agent": "iopipe/0.0.3"
+                   }
+                  }, function(error, response, body) {
         if (error || response.statusCode != 200) {
           throw "HTTP response != 200"
         }
@@ -26,7 +30,11 @@ function httpCallback(u, done) {
       })
     } else {
       prevResult = arguments[0]
-      request.post({url: url.format(u), body: prevResult, strictSSL: true },
+      request.post({url: url.format(u), body: prevResult, strictSSL: true,
+                    headers: {
+                      "User-Agent": "iopipe/0.0.3"
+                    }
+                   },
                     function(error, response, body) {
                       if (error || response.statusCode != 200) {
                         throw "HTTP response != 200"
