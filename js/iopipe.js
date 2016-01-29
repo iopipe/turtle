@@ -68,7 +68,7 @@ function pipescriptCallback(id, done) {
 exports.define = function() {
   var callbackList = []
   var nextCallback;
-  var done = function(result) { console.log(result) };
+  var done = function(result) { };
 
   for (var i = arguments.length - 1; i > -1; i--) {
     var arg = arguments[i];
