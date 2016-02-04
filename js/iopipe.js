@@ -27,6 +27,7 @@
               ,"http://somedestination/")
   ```
 */
+var events = require('events')
 var url = require('url')
 var request = require("request")
 var util = require('util')
@@ -36,13 +37,15 @@ var path = require('path')
 
 var USERAGENT = "iopipe/0.0.5"
 
-function funcCallback(call, done) {
+function funcCallback(call, context) {
   return function() {
-    done(call.apply(this, [].slice.call(arguments)))
+    var args = [].slice.call(arguments)
+    args.push(context.done)
+    call.apply(this, args)
   }
 }
 
-function httpCallback(u, done) {
+function httpCallback(u, context) {
   return function() {
     if (arguments.length === 0) {
       request.get({url: url.format(u), strictSSL: true,
@@ -51,9 +54,9 @@ function httpCallback(u, done) {
                    }
                   }, function(error, response, body) {
         if (error || response.statusCode != 200) {
-          throw "HTTP response != 200"
+          context.fail("HTTP response != 200")
         }
-        done(body)
+        context.done(body)
       })
     } else {
       prevResult = arguments[0]
@@ -64,31 +67,48 @@ function httpCallback(u, done) {
                    },
                     function(error, response, body) {
                       if (error || response.statusCode != 200) {
-                        throw "HTTP response != 200"
+                        context.fail("HTTP response != 200")
                       }
-                      done(body)
+                      context.done(body)
                     })
     }
   }
 }
 
-function pipescriptCallback(id, done) {
+function pipescriptCallback(id, context) {
   // Pull from index (or use cached pipescripts)
   /* download script */
   var script = fs.readFileSync(path.join(".iopipe/filter_cache/", id))
   var input = ""
 
-  return function() {
-    var prevResult = ""
-    if (arguments.length > 0) {
-      prevResult = arguments[0]
-    }
-    var sandbox = { "module": { "exports": function () {} }, "msg": prevResult }
+  return function(prevResult) {
+    var sandbox = { "module": { "exports": function () {} }
+                    ,"msg": prevResult
+                    ,"context": context}
     var ctx = vm.createContext(sandbox)
     vm.runInContext(script, ctx)
-    var result = vm.runInContext("module.exports(msg)", ctx)
+    var result = vm.runInContext("module.exports(msg, context)", ctx)
 
-    return done(result)
+    return context.done(result)
+  }
+}
+
+function contextFail(failure) {
+  /* No-op */
+  console.log("FAIL: " + failure)
+  throw failure
+}
+
+function make_context(done) {
+  return function() {
+        if (arguments.length === 1 || arguments[0] == null) {
+          var args = [].slice.call(arguments)
+          return done.apply(this, args)
+        }
+        var err = arguments[1]
+        if (err != null) {
+          contextFail(err)
+        }
   }
 }
 
@@ -109,29 +129,46 @@ function pipescriptCallback(id, done) {
 */
 exports.define = function() {
   var callbackList = []
-  var nextCallback;
-  var done = function(result) { };
+  var done = function() { };
 
   for (var i = arguments.length - 1; i > -1; i--) {
     var arg = arguments[i];
 
+    context = {
+      "fail": contextFail
+      ,"succeed": function(result) {
+          var args = [].slice.call(arguments)
+          return done.apply(this, args)
+      }
+      ,"done": make_context(done)
+      ,"raw": done
+    }
+
     if (typeof arg === "function") {
-      nextCallback = funcCallback(arg, done)
+      done = funcCallback(arg, context)
     } else if (typeof(arg) === "string") {
       var u = url.parse(arg);
 
       if (u.protocol === 'http:' || u.protocol === 'https:') {
         var server = u.hostname
-        nextCallback = httpCallback(u, done)
+        done = httpCallback(u, context)
       } else {
-        nextCallback = pipescriptCallback(arg, done)
+        done = pipescriptCallback(arg, context)
       }
     } else {
       throw new Error("ERROR: unknown argument: " + arg)
     }
-    done = nextCallback
   }
-  return nextCallback
+
+  /* We return a function that executes the pipeline,
+     if arguments are supplied, the first is input, and the remainder
+     are callbacks. */
+  return function() { 
+    // If arguments > 1 then remainder are callbacks.
+    var l = [].slice.call(arguments)
+    //console.log("Calling defined func with args: " + l)
+    return done.apply(this, l)
+  }
 }
 
 /**
@@ -171,14 +208,14 @@ exports.exec = function() {
   @param {*} property - Property to access in input to returned function.
 */
 exports.property = function (index) {
-  return function (obj) {
-    return obj[index]
+  return function (obj, done) {
+    done(obj[index])
   }
 }
 
 exports.bind = function (method, arg) {
-  return function (obj) {
-    return obj[method].apply(obj, [].slice.call(arguments).slice(1))
+  return function (obj, done) {
+    done(obj[method].apply(obj, [].slice.call(arguments).slice(1)))
   }
 }
 
@@ -201,8 +238,8 @@ exports.bind = function (method, arg) {
 */
 exports.apply = function () {
   var l = [].slice.call(arguments)
-  return function (input) {
-    return input.apply(input, l)
+  return function (input, done) {
+    done(input.apply(input, l))
   }
 }
 
@@ -220,15 +257,24 @@ exports.apply = function () {
 
   @param function function - Function to call against each input provided to output function.
 */
-exports.map = function (fun) {
-  return function(input) {
+exports.map = function(fun) {
+  return function(input, done) {
     var result = []
+    var waiter = events.EventEmitter()
+    var eventid = 'map-callback'
+    waiter.setMaxListeners(1)
+    waiter.on(eventid, function(msg) {
+      result.push(msg)
+      if (input.length === mfuncs.length) {
+        done(result)
+        waiter.removeAllListeners(eventid)
+      }
+    })
     for (i in input) {
-      result.push(
-        _go(function() { return fun(input[i]) })
-      )
+      fun(input[i], function(msg) {
+        waiter.emit(eventid, msg)
+      })
     }
-    return result
   }
 }
 
@@ -252,16 +298,25 @@ exports.map = function (fun) {
   @param {...function} function - Functions to call against the input to the output function.
 */
 exports.tee = function() {
-  var l = [].slice.call(arguments)
-  return function() {
-    var args = [].slice.call(arguments)
+  var tfuncs = [].slice.call(arguments)
+  return function(input, done) {
+    var args = input
     var result = []
-    for (f in l) {
-      result.push(
-        _go(function() { return l[f].apply(l[f], args)})
-      )
+    var waiter = events.EventEmitter()
+    var eventid = 'tee-callback'
+    waiter.setMaxListeners(1)
+    waiter.on(eventid, function(msg) {
+      result.push(msg)
+      if (result.length === tfuncs.length) {
+        done(result)
+        waiter.removeAllListeners(eventid)
+      }
+    })
+    for (f in tfuncs) {
+      tfuncs[f].apply(tfuncs[f], [input, function(msg) {
+        waiter.emit(eventid, msg)
+      }])
     }
-    return result
   }
 }
 
@@ -279,8 +334,8 @@ exports.tee = function() {
   @param function function - Function to reduce params to returned function.
 */
 exports.reduce = function(fun) {
-  return function(input) {
-    return input.reduce(fun)
+  return function(input, done) {
+    done(input.reduce(fun))
   }
 }
 
@@ -302,16 +357,18 @@ exports.reduce = function(fun) {
   ```
 */
 exports.fetch = function(u) {
-  request.get({url: url.format(u), strictSSL: true,
-               headers: {
-                 "User-Agent": USERAGENT
-               }
-              }, function(error, response, body) {
-    if (error || response.statusCode != 200) {
-      throw "HTTP response != 200"
-    }
-    return body
-  })
+  return function(input, done) {
+    request.get({url: url.format(u), strictSSL: true,
+                 headers: {
+                   "User-Agent": USERAGENT
+                 }
+    }, function(error, response, body) {
+      if (error || response.statusCode != 200) {
+        throw "HTTP response != 200"
+      }
+      done(body)
+    })
+  }
 }
 
 /**
@@ -334,8 +391,4 @@ if (!Object.hasOwnProperty("values")) {
   Object.values = function (arr) {
     return Object.keys(arr).map(function(y) {return arr[y]})
   }
-}
-
-function _go(fun) {
-  return fun()
 }
