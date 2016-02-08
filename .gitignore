@@ -23,3 +23,5 @@ _testmain.go
 
 *.exe
 *.prof
+
+node_modules
