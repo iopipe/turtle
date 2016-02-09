@@ -8,6 +8,7 @@ var request = require("request")
 var util = require('util')
 var vm = require('vm')
 var fs = require('fs')
+var path = require('path')
 
 var USERAGENT = "iopipe/0.0.5"
 
@@ -50,7 +51,7 @@ function httpCallback(u, done) {
 function pipescriptCallback(id, done) {
   // Pull from index (or use cached pipescripts)
   /* download script */
-  var script = fs.readFileSync(".iopipe/filter_cache/" + id)
+  var script = fs.readFileSync(path.join(".iopipe/filter_cache/", id))
   var input = ""
 
   return function() {
