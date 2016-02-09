@@ -1,14 +1,20 @@
 {
   "name": "iopipe",
   "private": false,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "iopipe sdk",
   "author": "Eric Windisch",
   "files": [ "js" ],
+  "keywords": ["iopipe", "flow", "waterfall", "async", "functional"],
   "dependencies": {
     "read-stream": "",
     "request": ""
   },
   "main": "js/iopipe.js",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iopipe/iopipe"
+  },
+  "bugs": "https://github.com/iopipe/iopipe/issues"
 }
