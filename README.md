@@ -156,14 +156,6 @@ Furthermore:
 5. Secure sharing, execution, & communications.
 
 ---------------------------------------
-Scaling
----------------------------------------
-
-Filters are pulled from (de)centralized repositories
-and scale should be considered when building and
-deploying private filter repositories.
-
----------------------------------------
 Security
 ---------------------------------------
 
