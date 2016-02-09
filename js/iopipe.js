@@ -1,7 +1,31 @@
-/*
- Usage:
- var iopipe = require('iopipe')
- iopipe.exec("http://api.twitter.com/blah/blah", function() {}, "sha256:DEADBEEF", "user/pipeline", "http://somedestination/")
+/**
+  @module iopipe
+  @description
+  IOpipe helps developers build, connect, and scale code.
+
+  Using flows, iopipe simplifies the consumption and integration
+  of web services through the chaining of kernels,
+  single-function applications.
+
+  Kernels take and transform input, providing straight-forward output
+  in a fashion to Unix pipes. A kernel may receive input or send output
+  to/from web service requests, functions, or local applications.
+
+  IOpipe may be embedded in applications, used from shell scripts,
+  or run manually via a CLI to form complete applications. Kernels
+  and pipelines may be run within local processes, or dispatched to
+  remote workers (i.e. "cloud").
+
+  Basic example usage:
+
+  ```javascript
+  var iopipe = require('iopipe')
+  iopipe.exec("http://api.twitter.com/blah/blah"
+              ,function() {}
+              ,"sha256:DEADBEEF"
+              ,"user/pipeline"
+              ,"http://somedestination/")
+  ```
 */
 var url = require('url')
 var request = require("request")
@@ -68,16 +92,20 @@ function pipescriptCallback(id, done) {
   }
 }
 
-/*
+/**
+   @description
    Defines a pipeline, returning a function.
    Used for passing arguments to a  pipeline as this
    is not possible with 'exec', or for  reusing a
    pipeline. Users seeking a  method with callback
-   should use  exec (which actually wraps define),
+   should use exec (which actually wraps define),
    or call:
 
-     define(args...)(input)
+   ```javascript
+   define(args...)(input)
+   ```
 
+   @param {...(string|function)} kernel - Kernels specified as functions, scripts, or HTTP endpoints.
 */
 exports.define = function() {
   var callbackList = []
@@ -106,7 +134,8 @@ exports.define = function() {
   return nextCallback
 }
 
-/*
+/**
+  @description
   Executes a pipeline, a la waterfall async pattern.
   Each argument is a callback for the result of the previous
   function. The final function may be seen as being the penultimate
@@ -114,24 +143,32 @@ exports.define = function() {
 
   Usage:
 
-    iopipe.exec("http://127.0.0.1"
-                ,"my_pipescript"
-                ,function(i) { return i }
-                ,"http://127.0.0.2/post"
-                ,callback)
+  ```javascript
+  iopipe.exec("http://127.0.0.1"
+              ,"my_pipescript"
+              ,function(i) { return i }
+              ,"http://127.0.0.2/post"
+              ,callback)
+  ```
+
+  @param {...(string|function)} kernel - Kernels specified as functions, scripts, or HTTP endpoints.
 */
 exports.exec = function() {
   var l = [].slice.call(arguments)
   return exports.define.apply(this, l)()
 }
 
-/*
+/**
   Returns a function to access a property/index in an input array.
 
   Example:
 
-    iopipe.define(iopipe.property(0))(["hello", "world"])
-    => "hello"
+  ```javascript
+  iopipe.define(iopipe.property(0))(["hello", "world"])
+  //=> "hello"
+  ```
+
+  @param {*} property - Property to access in input to returned function.
 */
 exports.property = function (index) {
   return function (obj) {
@@ -145,7 +182,7 @@ exports.bind = function (method, arg) {
   }
 }
 
-/*
+/**
    Return a function that accepts a function parameter,
    currying any parameters passed to apply() itself.
    for instance, the following is a "hello world" for apply:
@@ -155,8 +192,12 @@ exports.bind = function (method, arg) {
    function and the developer wishes to call this with an iopipe
    pipeline:
 
-     iopipe.exec(function() { return function (x) { console.log(x) } }
-                 ,iopipe.apply("hello world"))
+  ```javascript
+  iopipe.exec(function() { return function (x) { console.log(x) } }
+              ,iopipe.apply("hello world"))
+  ```
+
+  @param {...*} arguments - Arguments to pass to input of returned function.
 */
 exports.apply = function () {
   var l = [].slice.call(arguments)
@@ -165,15 +206,19 @@ exports.apply = function () {
   }
 }
 
-/*
+/**
   Returns a map function for executing pipelines for each value
   in an input array. This is how one loops over elements and performs
   transformations of multiple elements with iopipe.
 
   Example (adds 1 to each array value):
 
-   iopipe.map(function(i) { return i + 1 })([0, 1, 2])
-   => [1, 2, 3]
+  ```javascript
+  iopipe.map(function(i) { return i + 1 })([0, 1, 2])
+  //=> [1, 2, 3]
+  ```
+
+  @param function function - Function to call against each input provided to output function.
 */
 exports.map = function (fun) {
   return function(input) {
@@ -187,7 +232,7 @@ exports.map = function (fun) {
   }
 }
 
-/*
+/**
   Returns a function which executes each argument
   function/pipeline against a single input. That is,
   each passed argument (function) is called with
@@ -196,11 +241,15 @@ exports.map = function (fun) {
 
   Example:
 
-    function echo(i) {
-      return i
-    }
-    iopipe.tee(echo, echo)("hello world")
-    => ["hello world", "hello world"]
+  ```javascript
+  function echo(i) {
+    return i
+  }
+  iopipe.tee(echo, echo)("hello world")
+  //=> ["hello world", "hello world"]
+  ```
+
+  @param {...function} function - Functions to call against the input to the output function.
 */
 exports.tee = function() {
   var l = [].slice.call(arguments)
@@ -216,14 +265,18 @@ exports.tee = function() {
   }
 }
 
-/*
+/**
   Returns a reduce function for consolidating results or
   "squeezing" an array into a single value output.
 
   Example (sum):
 
+  ```javascript
   iopipe.reduce(function(prev, curr) { return prev + curr })([2, 2])
-  => 4
+  //=> 4
+  ```
+
+  @param function function - Function to reduce params to returned function.
 */
 exports.reduce = function(fun) {
   return function(input) {
@@ -231,20 +284,22 @@ exports.reduce = function(fun) {
   }
 }
 
-/*
+/**
   Returns a function which fetches the input URL via HTTP(s).
   This is useful if using iopipe to create a URL, as may happen
   if transforming some data or some API result into a new API request.
 
   Example:
 
-   var getHNitem = iopipe.define(
-                     "https://hacker-news.firebaseio.com/v0/items/".concat,
-                     ,iopipe.fetch)
-   getHNitem(1000, function(data) {
-     console.log("Got HackerNews story:")
-     console.log(data)
-   })
+  ```javascript
+  var getHNitem = iopipe.define(
+                    "https://hacker-news.firebaseio.com/v0/items/".concat,
+                    ,iopipe.fetch)
+  getHNitem(1000, function(data) {
+    console.log("Got HackerNews story:")
+    console.log(data)
+  })
+  ```
 */
 exports.fetch = function(u) {
   request.get({url: url.format(u), strictSSL: true,
@@ -259,7 +314,7 @@ exports.fetch = function(u) {
   })
 }
 
-/*
+/**
    We monkey-patch the Object.values function,
    this makes it easier to map assoc arrays using tee.
    Some Javascript implementations already offer this
@@ -268,8 +323,12 @@ exports.fetch = function(u) {
 
    Example:
 
-    iopipe.tee(Object.keys, Object.values)({"hello": "world"})
-    => ["hello", "world"]
+   ```javascript
+   iopipe.tee(Object.keys, Object.values)({"hello": "world"})
+   //=> ["hello", "world"]
+   ```
+
+   @param array array - Associative array to return values of.
 */
 if (!Object.hasOwnProperty("values")) {
   Object.values = function (arr) {

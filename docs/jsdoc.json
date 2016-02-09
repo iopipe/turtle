@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "opts": {
+    "destination": "docs/node",
+    "template": "../node_modules/minami"
+  }
+}
