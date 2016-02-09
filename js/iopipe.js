@@ -68,6 +68,17 @@ function pipescriptCallback(id, done) {
   }
 }
 
+/*
+   Defines a pipeline, returning a function.
+   Used for passing arguments to a  pipeline as this
+   is not possible with 'exec', or for  reusing a
+   pipeline. Users seeking a  method with callback
+   should use  exec (which actually wraps define),
+   or call:
+
+     define(args...)(input)
+
+*/
 exports.define = function() {
   var callbackList = []
   var nextCallback;
@@ -95,11 +106,33 @@ exports.define = function() {
   return nextCallback
 }
 
+/*
+  Executes a pipeline, a la waterfall async pattern.
+  Each argument is a callback for the result of the previous
+  function. The final function may be seen as being the penultimate
+  callback for triggering events.
+
+  Usage:
+
+    iopipe.exec("http://127.0.0.1"
+                ,"my_pipescript"
+                ,function(i) { return i }
+                ,"http://127.0.0.2/post"
+                ,callback)
+*/
 exports.exec = function() {
   var l = [].slice.call(arguments)
   return exports.define.apply(this, l)()
 }
 
+/*
+  Returns a function to access a property/index in an input array.
+
+  Example:
+
+    iopipe.define(iopipe.property(0))(["hello", "world"])
+    => "hello"
+*/
 exports.property = function (index) {
   return function (obj) {
     return obj[index]
@@ -112,7 +145,8 @@ exports.bind = function (method, arg) {
   }
 }
 
-/* Return a function that accepts a function parameter,
+/*
+   Return a function that accepts a function parameter,
    currying any parameters passed to apply() itself.
    for instance, the following is a "hello world" for apply:
      apply("Hello world")(function(x) { console.log(x) }))
@@ -131,6 +165,16 @@ exports.apply = function () {
   }
 }
 
+/*
+  Returns a map function for executing pipelines for each value
+  in an input array. This is how one loops over elements and performs
+  transformations of multiple elements with iopipe.
+
+  Example (adds 1 to each array value):
+
+   iopipe.map(function(i) { return i + 1 })([0, 1, 2])
+   => [1, 2, 3]
+*/
 exports.map = function (fun) {
   return function(input) {
     var result = []
@@ -143,12 +187,65 @@ exports.map = function (fun) {
   }
 }
 
+/*
+  Returns a function which executes each argument
+  function/pipeline against a single input. That is,
+  each passed argument (function) is called with
+  the given input. The effective opposite of map(),
+  although equally parallelizable.
+
+  Example:
+
+    function echo(i) {
+      return i
+    }
+    iopipe.tee(echo, echo)("hello world")
+    => ["hello world", "hello world"]
+*/
+exports.tee = function() {
+  var l = [].slice.call(arguments)
+  return function() {
+    var args = [].slice.call(arguments)
+    var result = []
+    for (f in l) {
+      result.push(
+        _go(function() { return l[f].apply(l[f], args)})
+      )
+    }
+    return result
+  }
+}
+
+/*
+  Returns a reduce function for consolidating results or
+  "squeezing" an array into a single value output.
+
+  Example (sum):
+
+  iopipe.reduce(function(prev, curr) { return prev + curr })([2, 2])
+  => 4
+*/
 exports.reduce = function(fun) {
   return function(input) {
     return input.reduce(fun)
   }
 }
 
+/*
+  Returns a function which fetches the input URL via HTTP(s).
+  This is useful if using iopipe to create a URL, as may happen
+  if transforming some data or some API result into a new API request.
+
+  Example:
+
+   var getHNitem = iopipe.define(
+                     "https://hacker-news.firebaseio.com/v0/items/".concat,
+                     ,iopipe.fetch)
+   getHNitem(1000, function(data) {
+     console.log("Got HackerNews story:")
+     console.log(data)
+   })
+*/
 exports.fetch = function(u) {
   request.get({url: url.format(u), strictSSL: true,
                headers: {
@@ -162,28 +259,21 @@ exports.fetch = function(u) {
   })
 }
 
-/* Monkey-patch Object.values function,
-   this makes it easier to map assoc arrays using tee:
-    > iopipe.tee(Object.keys, Object.values)({"hello": "world")
-    ("hello", "world")
+/*
+   We monkey-patch the Object.values function,
+   this makes it easier to map assoc arrays using tee.
+   Some Javascript implementations already offer this
+   function with the same interface. Monkey-patching this is
+   ugly, but should be mostly-safe(?)
+
+   Example:
+
+    iopipe.tee(Object.keys, Object.values)({"hello": "world"})
+    => ["hello", "world"]
 */
 if (!Object.hasOwnProperty("values")) {
   Object.values = function (arr) {
     return Object.keys(arr).map(function(y) {return arr[y]})
-  }
-}
-
-exports.tee = function() {
-  var l = [].slice.call(arguments)
-  return function() {
-    var args = [].slice.call(arguments)
-    var result = []
-    for (f in l) {
-      result.push(
-        _go(function() { return l[f].apply(l[f], args)})
-      )
-    }
-    return result
   }
 }
 
