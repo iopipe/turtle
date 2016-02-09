@@ -57,6 +57,9 @@ $ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
 # & converting the response with the script ResponseScript
 $ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
                       http://otherhost/request some.example.ResponseScript
+
+# Export an NPM module:
+$ iopipe export --name my-module-name http://localhost/some-request com.example.SomeScript
 ```
 
 ### NodeJS SDK:
