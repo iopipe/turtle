@@ -4,8 +4,16 @@
   "version": "0.0.5",
   "description": "iopipe sdk",
   "author": "Eric Windisch",
-  "files": [ "js" ],
-  "keywords": ["iopipe", "flow", "waterfall", "async", "functional"],
+  "files": [
+    "js"
+  ],
+  "keywords": [
+    "iopipe",
+    "flow",
+    "waterfall",
+    "async",
+    "functional"
+  ],
   "dependencies": {
     "read-stream": "",
     "request": ""
@@ -16,5 +24,8 @@
     "type": "git",
     "url": "https://github.com/iopipe/iopipe"
   },
-  "bugs": "https://github.com/iopipe/iopipe/issues"
+  "bugs": "https://github.com/iopipe/iopipe/issues",
+  "devDependencies": {
+    "jasmine": ""
+  }
 }
