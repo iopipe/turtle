@@ -192,7 +192,7 @@ func cmdExport(c *cli.Context) {
 		log.Fatal("No pipeline specified for export.")
 	}
 	if name == "" {
-                log.Fatal("Name not specified. Must pass required --name flag.")
+		log.Fatal("Name not specified. Must pass required --name flag.")
 	}
 	exportScript(name, c.Args()...)
 }
