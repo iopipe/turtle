@@ -30,7 +30,6 @@
 var events = require('events')
 var url = require('url')
 var request = require("request")
-var util = require('util')
 var vm = require('vm')
 var fs = require('fs')
 var path = require('path')
@@ -40,6 +39,9 @@ var USERAGENT = "iopipe/0.0.5"
 function funcCallback(call, context) {
   return function() {
     var args = [].slice.call(arguments)
+    if (args.length == 0) {
+      args.push(undefined)
+    }
     args.push(context.done)
     call.apply(this, args)
   }
@@ -164,9 +166,7 @@ exports.define = function() {
      if arguments are supplied, the first is input, and the remainder
      are callbacks. */
   return function() { 
-    // If arguments > 1 then remainder are callbacks.
     var l = [].slice.call(arguments)
-    //console.log("Calling defined func with args: " + l)
     return done.apply(this, l)
   }
 }
@@ -260,15 +260,17 @@ exports.apply = function () {
 exports.map = function(fun) {
   return function(input, done) {
     var result = []
-    var waiter = events.EventEmitter()
+    var waiter = new events.EventEmitter()
     var eventid = 'map-callback'
     waiter.setMaxListeners(1)
     waiter.on(eventid, function(msg) {
-      result.push(msg)
-      if (input.length === mfuncs.length) {
-        done(result)
-        waiter.removeAllListeners(eventid)
-      }
+      setImmediate(function() {
+        result.push(msg)
+        if (input.length === result.length) {
+          done(result)
+          waiter.removeAllListeners(eventid)
+        }
+      })
     })
     for (i in input) {
       fun(input[i], function(msg) {
@@ -302,15 +304,17 @@ exports.tee = function() {
   return function(input, done) {
     var args = input
     var result = []
-    var waiter = events.EventEmitter()
+    var waiter = new events.EventEmitter()
     var eventid = 'tee-callback'
     waiter.setMaxListeners(1)
     waiter.on(eventid, function(msg) {
-      result.push(msg)
-      if (result.length === tfuncs.length) {
-        done(result)
-        waiter.removeAllListeners(eventid)
-      }
+      setImmediate(function() {
+        result.push(msg)
+        if (result.length === tfuncs.length) {
+          done(result)
+          waiter.removeAllListeners(eventid)
+        }
+      })
     })
     for (f in tfuncs) {
       tfuncs[f].apply(tfuncs[f], [input, function(msg) {
