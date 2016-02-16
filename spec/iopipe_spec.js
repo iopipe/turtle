@@ -129,3 +129,15 @@ describe("property", function() {
     })
   });
 })
+
+describe("callback", function() {
+  it("calls function", function(done) {
+    iopipe.callback(done)()
+  })
+  it("passes input to function", function(done) {
+    iopipe.callback(function(input) {
+      expect(input).toEqual("hello world")
+      done()
+    })("hello world")
+  })
+})

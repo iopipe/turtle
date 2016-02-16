@@ -375,6 +375,19 @@ exports.fetch = function(u) {
   }
 }
 
+
+/**
+  Creates a new function accepting a callback around a function
+  which does not accept a callback parameter as its last argument.
+
+  @param {...function} function - Function to wrap a callback around.
+*/
+exports.callback = function(fun) {
+  return function(input, done) {
+    done(fun(input))
+  }
+}
+
 /**
    We monkey-patch the Object.values function,
    this makes it easier to map assoc arrays using tee.

@@ -108,8 +108,8 @@ translated request or response data.
 Example:
 
 ```javascript
-module.exports = function(input) {
-  return "I'm doing something with input: {0}".format(input)
+module.exports = function(input, context) {
+  context.done("I'm doing something with input: {0}".format(input))
 }
 ```
 
