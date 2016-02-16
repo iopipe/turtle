@@ -102,6 +102,11 @@ module.exports = function() {
 }
 
 func makeFilter(script string) (func(input string) (string, error), error) {
+	vm := otto.New()
+	return makeFilterWithVM(vm, script)
+}
+
+func makeFilterWithVM(vm *otto.Otto, script string) (func(input string) (string, error), error) {
 	var (
 		res  *http.Response
 		body []byte
@@ -120,13 +125,10 @@ func makeFilter(script string) (func(input string) (string, error), error) {
 	rjs := string(body[:])
 
 	return func(input string) (string, error) {
-		vm := otto.New()
-
 		logrus.Debug("Adding RequireJS")
 		vm.Run(rjs)
 
 		logrus.Debug("Executing script: " + script)
-		vm.Set("msg", input)
 		_, err := vm.Run(`
                         var module = { "exports": function() { } }
                 `)
@@ -137,12 +139,37 @@ func makeFilter(script string) (func(input string) (string, error), error) {
 		if err != nil {
 			return "", err
 		}
-		val, err := vm.Run("module.exports(msg)")
+		event := make(chan otto.Value)
+
+		oval, err := vm.ToValue(input)
 		if err != nil {
 			return "", err
 		}
-		return val.ToString()
+		jscontext := createContext(vm, event)
+
+		go vm.Call("module.exports", nil, oval, jscontext)
+		value := <-event
+		return value.ToString()
 	}, nil
+}
+
+func createContext(vm *otto.Otto, event chan otto.Value) otto.Value {
+	var cbfunc = func(invar ...interface{}) {
+		var lovar otto.Value
+		if len(invar) > 0 {
+			lovar, _ = vm.ToValue(invar[0])
+		} else {
+			lovar = otto.NullValue()
+		}
+		event <- lovar
+		close(event)
+	}
+	vm.Set("_iopipe_cb", cbfunc)
+	vm.Run(`_iopipe_context = { "done": _iopipe_cb,
+                                    "success": _iopipe_cb,
+                                    "fail": _iopipe_cb }`)
+	jscontext, _ := vm.Get("_iopipe_context")
+	return jscontext
 }
 
 func fetchFilter(filterPath string) ([]byte, error) {

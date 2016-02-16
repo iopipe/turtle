@@ -9,91 +9,108 @@ describe("define", function() {
 
 describe("defined-function", function() {
   it("can pass no args", function(done) {
-    var fun = iopipe.define(function(i) {
+    var fun = iopipe.define(function(i, cb) {
       expect(i).toEqual(undefined)
+      cb()
       done()
     })
     fun()
   })
   it("can pass one arg", function(done) {
     var expected = "hello world"
-    var fun = iopipe.define(function(i) {
-      expect(i).toEqual(expected)
+    var fun = iopipe.define(function(i, cb) {
+      expect(i).toEqual(expected); cb()
     }, done)
     fun(expected)
   })
-  /* depends on upcoming context patch *
   it("can trigger callback", function(done) {
-    var fun = iopipe.define(function() { })
+    var fun = iopipe.define(function(_, cb) { cb() })
     fun("", done)
   })
   it("passes result to callback", function(done) {
     var input = 2
     var expected = 3
-    var fun = iopipe.define(function(i) {
-      return i + 1
+    var fun = iopipe.define(function(i, cb) {
+      cb(i + 1)
     })
     fun(input, function(i) { 
       expect(i).toEqual(expected)
       done()
     })
   })
-  */
 })
 
 describe("map", function() {
-  it("has as many outputs as inputs", function() {
+  it("has as many outputs as inputs", function(done) {
     var input = [0, 1, 2]
-    var output = iopipe.map(function(i) { return i + 2 })(input)
-    expect(input.length).toEqual(output.length);
+    iopipe.map(function(i, cb) { cb(i + 2) })(input, function(output) {
+      expect(input.length).toEqual(output.length);
+      done()
+    })
   });
-  it("preserves order", function() {
+  it("preserves order", function(done) {
     var input = [0, 1, 2]
-    var output = iopipe.map(function(i) { return i })(input)
-    expect(output).toEqual(input);
+    iopipe.map(function(i, cb) { cb(i) })(input, function(output) {
+      expect(output).toEqual(input);
+      done()
+    })
   });
-  it("transforms each input element", function() {
+  it("transforms each input element", function(done) {
     var input = [0, 1, 2]
     var expected = [1, 2, 3]
-    var output = iopipe.map(function(i) { return i + 1 })(input)
-    expect(output).toEqual(expected)
+    iopipe.map(function(i, cb) { cb(i + 1) })(input, function(output) {
+      expect(output).toEqual(expected)
+      done()
+    })
   });
 });
 
 describe("tee", function() {
-  it("has as many outputs as functions", function() {
+  it("has as many outputs as functions", function(done) {
     var input = [0, 1, 2, 3, 4]
-    var echo = function(i) { return i }
-    var output = iopipe.tee(echo, echo)(input)
-    expect(output.length).toEqual(2);
+    var echo = function(i, cb) { cb(i) }
+    iopipe.tee(echo, echo)(input, function(output) {
+      expect(output.length).toEqual(2);
+      done()
+    })
   });
-  it("preserves order", function() {
+  it("preserves order", function(done) {
     var input = [0, 1, 2]
-    var echo = function(i) { return i }
-    var ret2 = function(i) { return 2 }
-    var output = iopipe.tee(echo, ret2)(input)
-    expect(output).toEqual([ echo(input), ret2(input) ]);
+    var echo = function(i, cb) { cb(i) }
+    var ret2 = function(i, cb) { cb(2) }
+    iopipe.tee(echo, ret2)(input, function(output) {
+      echo(input, function(e) {
+        ret2(input, function(r) {
+          expect(output).toEqual([e, r])
+          done()
+        })
+      })
+    })
   });
 });
 
 describe("reduce", function() {
-  it("can sum all input elements", function() {
+  it("can sum all input elements", function(done) {
     var input = [1, 2, 3]
     var sum = function(prev, next) {
       return prev + next
     }
-    var output = iopipe.reduce(sum)(input)
-    expect(output).toEqual(6)
+    iopipe.reduce(sum)(input, function(output) {
+      expect(output).toEqual(6)
+      done()
+    })
   });
 })
 
 describe("exec", function() {
   it("can chain functions", function(done) {
-    iopipe.exec(function() { return "hello world" }
-                ,function(input) {
+    iopipe.exec(function(_, cb) { cb("hello world") }
+                ,function(input, cb) {
                   expect(input).toEqual("hello world")
+                  done()
+                  cb()
                 }
-                ,done)
+                ,function(input, cb) { done(); cb() })
   });
 })
 
@@ -104,9 +121,23 @@ describe("apply", function() {
 })
 
 describe("property", function() {
-  it("returns property for arg", function() {
+  it("returns property for arg", function(done) {
     var obj = { "key": "hello world" }
-    var output = iopipe.property("key")(obj)
-    expect(output).toEqual(obj["key"])
+    iopipe.property("key")(obj, function (output) {
+      expect(output).toEqual(obj["key"])
+      done()
+    })
   });
+})
+
+describe("callback", function() {
+  it("calls function", function(done) {
+    iopipe.callback(done)()
+  })
+  it("passes input to function", function(done) {
+    iopipe.callback(function(input) {
+      expect(input).toEqual("hello world")
+      done()
+    })("hello world")
+  })
 })

@@ -39,11 +39,13 @@ var mypipe = iopipe.define(
   function() {
     return "hello world"
   }
-  ,console.log
+  ,iopipe.callback(console.log)
 )
 
 mypipe()
 ```
+
+Note that all arguments to iopipe.define or iopipe.exec require a callback parameter as its last argument. The method iopipe.callback() is provided as a convenience method to provide a callback to any function that does not, itself, offer a callback parameter.
 
 The *exec* function exists for those not needing a reference to the function:
 
@@ -53,7 +55,7 @@ iopipe.exec(
   function() {
     return "hello world"
   }
-  ,console.log
+  ,iopipe.callback(console.log)
 )
 ```
 
@@ -67,7 +69,7 @@ The following performs an HTTP GET and prints the output to the console:
 
 ```javascript
 var iopipe = require("iopipe")
-iopipe.exec("http://127.0.0.1/my_request/", console.log)
+iopipe.exec("http://127.0.0.1/my_request/", iopipe.callback(console.log))
 ```
 
 Manipulating a response and forwarding it to another server is easily done:
@@ -93,9 +95,9 @@ Modifying the previous example to convert the inline function to a kernel:
 $ # Write a kernel via the shell:
 $ mkdir -p .iopipe/filter_cache/
 $ cat <<EOF >.iopipe/filter_cache/myscript
-module.exports = function(input) {
+module.exports = function(input, context) {
   var x = JSON.decode(input)
-  return x["field"]
+  context.done(x["field"])
 }
 EOF
 ```
