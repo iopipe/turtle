@@ -31,8 +31,9 @@ var events = require('events')
 var url = require('url')
 var request = require("request")
 var vm = require('vm')
-var fs = require('fs')
 var path = require('path')
+
+var local_driver = require('./exec_drivers/local/index.js')
 
 var USERAGENT = "iopipe/0.0.5"
 
@@ -74,24 +75,6 @@ function httpCallback(u, context) {
                       context.done(body)
                     })
     }
-  }
-}
-
-function pipescriptCallback(id, context) {
-  // Pull from index (or use cached pipescripts)
-  /* download script */
-  var script = fs.readFileSync(path.join(".iopipe/filter_cache/", id))
-  var input = ""
-
-  return function(prevResult) {
-    var sandbox = { "module": { "exports": function () {} }
-                    ,"msg": prevResult
-                    ,"context": context}
-    var ctx = vm.createContext(sandbox)
-    vm.runInContext(script, ctx)
-    var result = vm.runInContext("module.exports(msg, context)", ctx)
-
-    return context.done(result)
   }
 }
 
@@ -155,7 +138,7 @@ exports.define = function() {
         var server = u.hostname
         done = httpCallback(u, context)
       } else {
-        done = pipescriptCallback(arg, context)
+        done = local_driver.invoke({ id: arg }, context)
       }
     } else {
       throw new Error("ERROR: unknown argument: " + arg)
