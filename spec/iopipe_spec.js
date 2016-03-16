@@ -1,4 +1,4 @@
-var iopipe = require("../js/iopipe")
+var iopipe = require("../js/iopipe")()
 
 describe("define", function() {
   it("returns a function", function() {

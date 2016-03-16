@@ -1,6 +1,4 @@
 var AWS = require('aws-sdk')
-var config = require('../config')
-var crypto = require('crypto')
 var ctxutils = require('../../ctxutils')
 
 var awsLambda = new AWS.Lambda({apiVersion: '2015-03-31'});
@@ -14,9 +12,11 @@ exports.init = function() {
 }
 
 exports.invoke = function(event, context) {
+  console.log("AWS returning invocation function.")
   var funcID = event.id
   // api docs: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#invoke-property
   return function(prevResult) {
+    console.log("AWS invoking lambda")
     var params = {
       FunctionName: funcID
       ,Payload: prevResult

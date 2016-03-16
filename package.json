@@ -15,6 +15,7 @@
     "functional"
   ],
   "dependencies": {
+    "aws-sdk": "",
     "read-stream": "",
     "request": ""
   },

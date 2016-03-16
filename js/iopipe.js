@@ -37,6 +37,18 @@ var local_driver = require('./exec_drivers/local/index.js')
 
 var USERAGENT = "iopipe/0.0.5"
 
+function IOpipe(options) {
+  var _exec_driver = 'local'
+  if (options && "exec_driver" in options) {
+    _exec_driver = options.exec_driver
+  }
+  this._exec_driver = require("./" + path.join('./exec_drivers/', _exec_driver, 'index.js'))
+}
+
+module.exports = function(options) {
+  return new IOpipe(options)
+}
+
 function funcCallback(call, context) {
   return function() {
     var args = [].slice.call(arguments)
@@ -112,7 +124,7 @@ function make_context(done) {
 
    @param {...(string|function)} kernel - Kernels specified as functions, scripts, or HTTP endpoints.
 */
-exports.define = function() {
+IOpipe.prototype.define = function() {
   var callbackList = []
   var done = function() { };
 
@@ -138,7 +150,7 @@ exports.define = function() {
         var server = u.hostname
         done = httpCallback(u, context)
       } else {
-        done = local_driver.invoke({ id: arg }, context)
+        done = this._exec_driver.invoke({ id: arg }, context)
       }
     } else {
       throw new Error("ERROR: unknown argument: " + arg)
@@ -173,9 +185,9 @@ exports.define = function() {
 
   @param {...(string|function)} kernel - Kernels specified as functions, scripts, or HTTP endpoints.
 */
-exports.exec = function() {
+IOpipe.prototype.exec = function() {
   var l = [].slice.call(arguments)
-  return exports.define.apply(this, l)()
+  return this.define.apply(this, l)()
 }
 
 /**
@@ -190,13 +202,13 @@ exports.exec = function() {
 
   @param {*} property - Property to access in input to returned function.
 */
-exports.property = function (index) {
+IOpipe.prototype.property = function (index) {
   return function (obj, done) {
     done(obj[index])
   }
 }
 
-exports.bind = function (method, arg) {
+IOpipe.prototype.bind = function (method, arg) {
   return function (obj, done) {
     done(obj[method].apply(obj, [].slice.call(arguments).slice(1)))
   }
@@ -219,7 +231,7 @@ exports.bind = function (method, arg) {
 
   @param {...*} arguments - Arguments to pass to input of returned function.
 */
-exports.apply = function () {
+IOpipe.prototype.apply = function () {
   var l = [].slice.call(arguments)
   return function (input, done) {
     done(input.apply(input, l))
@@ -240,7 +252,7 @@ exports.apply = function () {
 
   @param function function - Function to call against each input provided to output function.
 */
-exports.map = function(fun) {
+IOpipe.prototype.map = function(fun) {
   return function(input, done) {
     var result = []
     var waiter = new events.EventEmitter()
@@ -282,7 +294,7 @@ exports.map = function(fun) {
 
   @param {...function} function - Functions to call against the input to the output function.
 */
-exports.tee = function() {
+IOpipe.prototype.tee = function() {
   var tfuncs = [].slice.call(arguments)
   return function(input, done) {
     var args = input
@@ -320,7 +332,7 @@ exports.tee = function() {
 
   @param function function - Function to reduce params to returned function.
 */
-exports.reduce = function(fun) {
+IOpipe.prototype.reduce = function(fun) {
   return function(input, done) {
     done(input.reduce(fun))
   }
@@ -343,7 +355,7 @@ exports.reduce = function(fun) {
   })
   ```
 */
-exports.fetch = function(u) {
+IOpipe.prototype.fetch = function(u) {
   return function(input, done) {
     request.get({url: url.format(u), strictSSL: true,
                  headers: {
@@ -365,7 +377,7 @@ exports.fetch = function(u) {
 
   @param {...function} function - Function to wrap a callback around.
 */
-exports.callback = function(fun) {
+IOpipe.prototype.callback = function(fun) {
   return function(input, done) {
     done(fun(input))
   }
