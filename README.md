@@ -69,7 +69,7 @@ mixing HTTP(S) requests/POSTs, function calls, and kernels. Callbacks
 receive the return of the previous function call or HTTP body.
 
 ```javascript
-var iopipe = require("iopipe")
+var iopipe = require("iopipe")()
 
 // Where com.example.SomeScript is present in .iopipe/filter_cache/
 iopipe.exec("http://localhost/get-request",
@@ -77,8 +77,8 @@ iopipe.exec("http://localhost/get-request",
             "http://otherhost.post")
 
 // Users may chain functions and HTTP requests.
-iopipe.exec(function() { return "something" },
-            function(arg) { return arg },
+iopipe.exec(function(_, ctx) { ctx.done("something") },
+            function(arg, ctx) { ctx.done(arg) },
             "http://otherhost.post",
             your_callback)
 
