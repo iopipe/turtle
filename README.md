@@ -2,16 +2,18 @@ IOpipe
 ---------------------------------------
 Apache 2.0 licensed.
 
-IOpipe simplifies the consumption and integration of web services through
-the chaining of kernels, single-function applications.
+IOpipe simplifies the development of applications through
+the chaining of kernels, single-function modules.
 
-Kernels take and transform input, providing straight-forward output
-in a fashion to Unix pipes. A kernel may receive input or send output to/from
+Kernels take and transform input and communicate over the networking,
+operating in a fashion to Unix pipes. A kernel may receive input or send output to/from
 web service requests, functions, or local applications.
 
 IOpipe may be embedded in applications, used from shell scripts, or run manually
-via a CLI to form complete applications. Kernels and pipelines may be run
-within local processes, or dispatched to remote workers (i.e. "cloud").
+via a CLI to create complete applications. Kernels and pipelines may be run
+within local processes, or dispatched to remote workers (i.e. "cloud") via
+support of AWS Lambda, Google Cloud Functions, and similar "serverless"
+platforms.
 
 ![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
 [![Coverage Status](https://coveralls.io/repos/github/iopipe/iopipe/badge.svg?branch=master&t=UYi1cn)](https://coveralls.io/github/iopipe/iopipe?branch=master)
@@ -77,8 +79,8 @@ iopipe.exec("http://localhost/get-request",
             "http://otherhost.post")
 
 // Users may chain functions and HTTP requests.
-iopipe.exec(function(_, ctx) { ctx.done("something") },
-            function(arg, ctx) { ctx.done(arg) },
+iopipe.exec(function(_, callback) { callback("something") },
+            function(arg, callback) { callback(arg) },
             "http://otherhost.post",
             your_callback)
 
@@ -96,7 +98,7 @@ For more information on using the NodeJS SDK, please refer to its documentation:
 ***https://github.com/iopipe/iopipe/blob/master/docs/nodejs.md***
 
 ---------------------------------------
-Kernels
+Kernel functions
 ---------------------------------------
 
 Requests and responses are translated using kernels, and
@@ -112,6 +114,11 @@ module.exports = function(input, context) {
   context.done("I'm doing something with input: {0}".format(input))
 }
 ```
+
+Functions should expect a "context" parameter which may be called
+directly as a callback, but also offers the methods 'done', 'success',
+and 'fail'. Users needing, for any reason, to create a context may
+call iopipe.create_context(callback).
 
 For more on writing filters see:
 ***https://github.com/iopipe/iopipe/blob/master/docs/kernels.md***
@@ -135,34 +142,9 @@ $ docker run --name iopipe-data iopipe-dev
 $ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe-dev'" | tee -a ~/.bashrc)
 $ iopipe --help
 ```
-
----------------------------------------
-Project goals
----------------------------------------
-
-The principal goal of our project is to improve
-human to machine and machine to machine communication.
-We believe this can be achieved without the creation
-or use of new protocols, but through the use of
-a flow-based programming model.
-
-Furthermore:
-
-1. Simplify the use and integration of existing APIs into
-   user applications.
-2. Support use by both existing and new applications.
-3. Design for an open and distributed web.
-4. Permissive open source licensing.
-5. Secure sharing, execution, & communications.
-
 ---------------------------------------
 Security
 ---------------------------------------
-
-Note that this tool communicates to 3rd-party
-web services. Caution is advised when trusting
-these services, as is standard practice with
-web and cloud services.
 
 Kernels are executed in individual virtual machines
 whenever allowed by the executing environment.
@@ -175,6 +157,12 @@ when running community created kernels.
 It is a project priority to make fetching, publishing,
 and execution of kernels secure for a
 production-ready 1.0.0 release.
+
+Modules are fetched and stored using sha256 hashes,
+providing an advantage over module-hosting mechanisms
+which are based simply on a name and version. Future
+versions of IOpipe will likely implement TUF for
+state-of-the-art software assurance.
 
 Contact security@iopipe.com for questions.
 
