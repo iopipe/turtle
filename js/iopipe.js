@@ -55,7 +55,7 @@ function funcCallback(call, context) {
     if (args.length == 0) {
       args.push(undefined)
     }
-    args.push(context.done)
+    args.push(context)
     call.apply(this, args)
   }
 }
@@ -90,23 +90,31 @@ function httpCallback(u, context) {
   }
 }
 
-function contextFail(failure) {
-  /* No-op */
-  console.log("FAIL: " + failure)
-  throw failure
-}
-
-function make_context(done) {
-  return function() {
-        if (arguments.length === 1 || arguments[0] == null) {
-          var args = [].slice.call(arguments)
-          return done.apply(this, args)
-        }
-        var err = arguments[1]
-        if (err != null) {
-          contextFail(err)
-        }
+IOpipe.prototype.make_context = function(done) {
+  var mkctx = function() {
+    return function() {
+      if (arguments.length === 1 || arguments[0] == null) {
+        var args = [].slice.call(arguments)
+        return done.apply(this, args)
+      }
+      var err = arguments[1]
+      if (err != null) {
+        contextFail(err)
+      }
+    }
   }
+  var ctx = mkctx()
+  ctx.done = mkctx()
+  ctx.fail = function(failure) {
+    console.log("FAIL: " + failure)
+    throw failure
+  }
+  ctx.succeed = function(result) {
+    var args = [].slice.call(arguments)
+    return done.apply(this, args)
+  }
+  ctx.raw = done
+  return ctx
 }
 
 /**
@@ -131,15 +139,7 @@ IOpipe.prototype.define = function() {
   for (var i = arguments.length - 1; i > -1; i--) {
     var arg = arguments[i];
 
-    context = {
-      "fail": contextFail
-      ,"succeed": function(result) {
-          var args = [].slice.call(arguments)
-          return done.apply(this, args)
-      }
-      ,"done": make_context(done)
-      ,"raw": done
-    }
+    var context = this.make_context(done)
 
     if (typeof arg === "function") {
       done = funcCallback(arg, context)
@@ -160,8 +160,12 @@ IOpipe.prototype.define = function() {
   /* We return a function that executes the pipeline,
      if arguments are supplied, the first is input, and the remainder
      are callbacks. */
+  var iopipe = this
   return function() { 
     var l = [].slice.call(arguments)
+    if (l.length > 1) {
+      l[1] = iopipe.make_context(l[1])
+    }
     return done.apply(this, l)
   }
 }
@@ -253,6 +257,7 @@ IOpipe.prototype.apply = function () {
   @param function function - Function to call against each input provided to output function.
 */
 IOpipe.prototype.map = function(fun) {
+  var iopipe = this
   return function(input, done) {
     var result = []
     var waiter = new events.EventEmitter()
@@ -268,9 +273,9 @@ IOpipe.prototype.map = function(fun) {
       })
     })
     for (i in input) {
-      fun(input[i], function(msg) {
+      fun(input[i], iopipe.make_context(function(msg) {
         waiter.emit(eventid, msg)
-      })
+      }))
     }
   }
 }
@@ -295,9 +300,9 @@ IOpipe.prototype.map = function(fun) {
   @param {...function} function - Functions to call against the input to the output function.
 */
 IOpipe.prototype.tee = function() {
+  var iopipe = this
   var tfuncs = [].slice.call(arguments)
-  return function(input, done) {
-    var args = input
+  return function(input, context) {
     var result = []
     var waiter = new events.EventEmitter()
     var eventid = 'tee-callback'
@@ -306,15 +311,15 @@ IOpipe.prototype.tee = function() {
       setImmediate(function() {
         result.push(msg)
         if (result.length === tfuncs.length) {
-          done(result)
+          context(result)
           waiter.removeAllListeners(eventid)
         }
       })
     })
     for (f in tfuncs) {
-      tfuncs[f].apply(tfuncs[f], [input, function(msg) {
+      tfuncs[f].apply(tfuncs[f], [input, iopipe.make_context(function(msg) {
         waiter.emit(eventid, msg)
-      }])
+      })])
     }
   }
 }
