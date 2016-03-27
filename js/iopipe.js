@@ -37,12 +37,48 @@ var local_driver = require('./exec_drivers/local/index.js')
 
 var USERAGENT = "iopipe/0.0.5"
 
+/**
+   @description
+   Initalizes an IOpipe environment,
+   accepting an argument specifying runtime options
+   such as the execution driver ('local', 'aws', 'gcp', etc),
+   and settings for those execution drivers.
+
+   Without arguments, performs local execution and reads/writes
+   kernels to the directory .iopipe_cache.
+
+   ```javascript
+   IOpipe({
+     exec_driver: 'aws'
+     exec_driver_opts: {
+       region: 'us-west-1',
+       access_key: 'itsasecrettoeverybody',
+       secret_key: 'itsasecrettoeverybody'
+     }
+   })
+   ```
+
+   @param object options - Runtime options.
+*/
 function IOpipe(options) {
   var _exec_driver = 'local'
   if (options && "exec_driver" in options) {
     _exec_driver = options.exec_driver
   }
-  this._exec_driver = require("./" + path.join('./exec_drivers/', _exec_driver, 'index.js'))
+  driver_options = {}
+  if (options &&
+      "exec_driver_opts" in options) {
+      //options.exec_driver in options.exec_driver_opts) {
+    //Object.assign(driver_options, options.exec_driver_opts[options.exec_driver])
+    driver_options = options.exec_driver_opts
+  }
+  /*console.log(options)
+  console.log(options.exec_driver_opts)
+  console.log(options.exec_driver_opts[options.exec_driver])
+  //console.log(driver_options)*/
+  this._exec_driver = require("./" + path.join('./exec_drivers/', _exec_driver, 'index.js'))(
+    driver_options
+  )
 }
 
 module.exports = function(options) {
@@ -77,7 +113,7 @@ function httpCallback(u, context) {
       prevResult = arguments[0]
       request.post({url: url.format(u), body: prevResult, strictSSL: true,
                     headers: {
-                      "User-Agent": "iopipe/0.0.3"
+                      "User-Agent": USERAGENT
                     }
                    },
                     function(error, response, body) {
