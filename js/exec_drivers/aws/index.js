@@ -1,37 +1,39 @@
 var AWS = require('aws-sdk')
 var ctxutils = require('../../ctxutils')
 
-var awsLambda = new AWS.Lambda({apiVersion: '2015-03-31'});
-
-exports.init = function() {
-  /* Init */
-  var cfgbase = config.exec_driver.aws_lambda
-  AWS.config.region = cfgbase.region
-  AWS.config.update({accessKeyId: cfgbase.access_key,
-                     secretAccessKey: cfgbase.secret_key})
+module.exports = function(opts) {
+  return new LambdaDriver(opts)
 }
 
-exports.invoke = function(event, context) {
-  console.log("AWS returning invocation function.")
+function LambdaDriver(opts) {
+  this._aws_lambda = new AWS.Lambda({
+    apiVersion: '2015-03-31',
+    region: opts.region,
+    accessKeyId: opts.access_key,
+    secretAccessKey: opts.secret_key
+  })
+}
+
+LambdaDriver.prototype.invoke = function(event, context) {
+  var driver = this._aws_lambda
   var funcID = event.id
   // api docs: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#invoke-property
   return function(prevResult) {
-    console.log("AWS invoking lambda")
     var params = {
       FunctionName: funcID
       ,Payload: prevResult
     }
-    awsLambda.invoke(params, ctxutils.callback(context))
+    driver.invoke(params, ctxutils.callback(context))
   }
 }
 
-exports.listFunctions = function(event, context) {
-  awsLambda.listFunctions({}, ctxutils.callback(context))
+LambdaDriver.prototype.listFunctions = function(event, context) {
+  this._aws_lambda.listFunctions({}, ctxutils.callback(context))
 }
 
-exports.getFunction = function(event, context) {
+LambdaDriver.prototype.getFunction = function(event, context) {
   // api docs: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#getFunction-property
-  awsLambda.getFunction(params, ctxutils.callback(context))
+  this._aws_lambda.getFunction(params, ctxutils.callback(context))
 
   /* data:
    configuration {
@@ -54,7 +56,7 @@ exports.getFunction = function(event, context) {
   */
 }
 
-exports.createFunction = function(event, context) {
+LambdaDriver.prototype.createFunction = function(event, context) {
   /*params = {
     FunctionName:
     ,Role:

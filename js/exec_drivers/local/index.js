@@ -1,11 +1,16 @@
 var fs = require('fs')
 var ctxutils = require('../../ctxutils')
 
+module.exports = LocalDriver
+
+function LocalDriver(opts) {
+}
+
 function get_filter_cache(id) {
   return path.join(".iopipe/filter_cache", id)
 }
 
-exports.invoke = function (event, context) {
+LocalDriver.prototype.invoke = function (event, context) {
   var id = event.id
 
   // Pull from index (or use cached pipescripts)
@@ -25,6 +30,6 @@ exports.invoke = function (event, context) {
   }
 }
 
-exports.listFunctions = function(event, context) {
+LocalDriver.prototype.listFunctions = function(event, context) {
   fs.readdir(get_filter_cache("", cxtutils.callback(context)))
 }
