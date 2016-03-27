@@ -68,14 +68,8 @@ function IOpipe(options) {
   driver_options = {}
   if (options &&
       "exec_driver_opts" in options) {
-      //options.exec_driver in options.exec_driver_opts) {
-    //Object.assign(driver_options, options.exec_driver_opts[options.exec_driver])
     driver_options = options.exec_driver_opts
   }
-  /*console.log(options)
-  console.log(options.exec_driver_opts)
-  console.log(options.exec_driver_opts[options.exec_driver])
-  //console.log(driver_options)*/
   this._exec_driver = require("./" + path.join('./exec_drivers/', _exec_driver, 'index.js'))(
     driver_options
   )
