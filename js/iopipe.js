@@ -32,6 +32,7 @@ var url = require('url')
 var request = require("request")
 var vm = require('vm')
 var path = require('path')
+var crypto = require('crypto')
 
 var local_driver = require('./exec_drivers/local/index.js')
 
@@ -132,6 +133,37 @@ IOpipe.prototype.make_context = function(done) {
   }
   ctx.raw = done
   return ctx
+}
+
+IOpipe.prototype.post_function = function(data, callback) {
+  this.define(base + '/v0/filters/',
+              iopipe.make_context(callback))(data)
+}
+
+IOpipe.prototype.fetch_function = function(id, callback) {
+  this.fetch(base + '/v0/filters/' + id, function(func) {
+    const hash = crypto.createHash('sha256');
+    hash.update(func)
+    var hex = hash.digest('hex')
+    if (hex !== id) {
+      throw "Error"
+    }
+    callback(input)
+  })
+}
+
+IOpipe.prototype.pull_function = function(id, callback) {
+  var iopipe = this
+  this.fetch_function(id, function(func) {
+    iopipe._exec_driver.CreateFunction(func, callback)
+  })
+}
+
+IOpipe.prototype.push_function = function(id, callback) {
+  var iopipe = this
+  this._exec_driver.GetFunction(id, function(func) {
+    iopipe.post_function(func, callback)
+  })
 }
 
 /**
