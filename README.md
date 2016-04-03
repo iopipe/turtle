@@ -2,18 +2,15 @@ IOpipe
 ---------------------------------------
 Apache 2.0 licensed.
 
-IOpipe simplifies the development of applications through
-the chaining of kernels, single-function modules.
+IOpipe is a toolkit for building event-driven applications
+running locally or in the cloud (AWS Lambda, Google Cloud Functions,
+Azure Functions). At its core, IOpipe provides a flow-based model for
+building functional, scalable applications through the chaining
+of single-function modules.
 
 Kernels take and transform input and communicate over the networking,
 operating in a fashion to Unix pipes. A kernel may receive input or send output to/from
 web service requests, functions, or local applications.
-
-IOpipe may be embedded in applications, used from shell scripts, or run manually
-via a CLI to create complete applications. Kernels and pipelines may be run
-within local processes, or dispatched to remote workers (i.e. "cloud") via
-support of AWS Lambda, Google Cloud Functions, and similar "serverless"
-platforms.
 
 ![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
 [![Coverage Status](https://coveralls.io/repos/github/iopipe/iopipe/badge.svg?branch=master&t=UYi1cn)](https://coveralls.io/github/iopipe/iopipe?branch=master)
