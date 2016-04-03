@@ -36,7 +36,8 @@ var crypto = require('crypto')
 
 var local_driver = require('./exec_drivers/local/index.js')
 
-var USERAGENT = "iopipe/0.0.6"
+var USERAGENT = "iopipe/0.0.5"
+var REGISTRY_HOST = "http://192.241.174.50/"
 
 /**
    @description
@@ -136,12 +137,13 @@ IOpipe.prototype.make_context = function(done) {
 }
 
 IOpipe.prototype.post_function = function(data, callback) {
-  this.define(base + '/v0/filters/',
+  this.define(REGISTRY_HOST + '/v0/filters/',
               iopipe.make_context(callback))(data)
 }
 
 IOpipe.prototype.fetch_function = function(id, callback) {
-  this.fetch(base + '/v0/filters/' + id, function(func) {
+  var iopipe = IOpipe.prototype
+  iopipe.fetch(REGISTRY_HOST + '/v0/filters/' + id, function(func) {
     const hash = crypto.createHash('sha256');
     hash.update(func)
     var hex = hash.digest('hex')
@@ -224,7 +226,7 @@ IOpipe.prototype.define = function() {
           done = this._exec_driver.invoke({ id: arg }, context)
         }
       } else {
-        throw new Error("ERROR: unknown argument: " + arg)
+        done = this._exec_driver.invoke({ id: arg }, IOpipe.prototype.make_context(context))
       }
     }
 

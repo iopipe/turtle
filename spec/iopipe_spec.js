@@ -1,4 +1,7 @@
 var iopipe = require("../js/iopipe")()
+var request = require('request');
+var sinon = require('sinon');
+var Promise = require('bluebird');
 
 describe("define", function() {
   it("returns a function", function() {
@@ -89,23 +92,23 @@ describe("tee", function() {
   it("has as many outputs as functions", function(done) {
     var input = [0, 1, 2, 3, 4]
     var echo = function(i, ctx) { ctx.done(i) }
-    iopipe.tee(echo, echo)(input, iopipe.make_context(function(output) {
+    iopipe.tee(echo, echo)(input, function(output) {
       expect(output.length).toEqual(2);
       done()
-    }))
+    })
   });
   it("preserves order", function(done) {
     var input = [0, 1, 2]
     var echo = function(i, ctx) { ctx(i) }
     var ret2 = function(i, ctx) { ctx(2) }
-    iopipe.tee(echo, ret2)(input, iopipe.make_context(function(output) {
+    iopipe.tee(echo, ret2)(input, function(output) {
       echo(input, function(e) {
         ret2(input, function(r) {
           expect(output).toEqual([e, r])
           done()
         })
       })
-    }))
+    })
   });
 });
 
@@ -161,4 +164,17 @@ describe("callback", function() {
       done()
     })("hello world")
   })
+})
+
+describe("fetch_function", function() {
+    var sandbox, requestGetStub;
+    beforeEach(function(){
+      sandbox = sinon.sandbox.create();
+      requestGetStub = sandbox.stub(request, 'get');
+      requestGetStub.returns(Promise.resolve({success:true}));
+    })
+
+    afterEach(function(){
+      sandbox.restore();
+    })
 })
