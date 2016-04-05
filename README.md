@@ -18,8 +18,6 @@ input and communicate over the networking, operating in a fashion to
 Unix pipes. A kernel may receive input or send output to/from
 web service requests, functions, or local applications.
 
-![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
-[![Coverage Status](https://coveralls.io/repos/github/iopipe/iopipe/badge.svg?branch=master&t=UYi1cn)](https://coveralls.io/github/iopipe/iopipe?branch=master)
 
 ---------------------------------------
 Usage
