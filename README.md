@@ -2,14 +2,20 @@ IOpipe
 ---------------------------------------
 Apache 2.0 licensed.
 
-IOpipe is a toolkit for building event-driven applications
-running locally or in the cloud (AWS Lambda, Google Cloud Functions,
-Azure Functions). At its core, IOpipe provides a flow-based model for
-building functional, scalable applications through the chaining
-of single-function modules.
+IOpipe is a toolkit for building and orchestrating event-driven and
+serverless applications. These apps may run *locally* or in the cloud
+via AWS Lambda, Google Cloud Functions, or Azure Functions.
 
-Kernels take and transform input and communicate over the networking,
-operating in a fashion to Unix pipes. A kernel may receive input or send output to/from
+IOpipe can:
+
+ * Chain AWS Lambda Functions and local functions
+ * Convert NodeJS functions into serverless functions
+ * Perform GET and POST HTTP requests
+ * Parallelize data into serverless workers.
+
+We call our serverless functions "kernels".  Kernels take and transform
+input and communicate over the networking, operating in a fashion to
+Unix pipes. A kernel may receive input or send output to/from
 web service requests, functions, or local applications.
 
 ![Build Status](https://circleci.com/gh/iopipe/iopipe.png?circle-token=eae431abda6b19dbfca597af818bb01092211272)
