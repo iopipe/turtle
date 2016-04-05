@@ -19,58 +19,21 @@ web service requests, functions, or local applications.
 Usage
 ---------------------------------------
 
-### Installation:
-
-Download the [latest binary release](https://github.com/iopipe/iopipe/releases) and chmod 755 the file.
-
-Building from source? See [Build & Install from source](#build--install-from-source).
-
-Alternatively, download & alias our Docker image:
-
-```bash
-$ docker pull iopipe/iopipe:trunk
-$ docker run --name iopipe-data iopipe/iopipe:trunk
-$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
-$ iopipe --help
-```
-
-OS-specific packages are forthcoming.
-
-### Command-line
-
-```sh
-# Import a kernel and name it com.example.SomeScript
-$ iopipe import --name com.example.SomeScript - <<<'input'
-
-# List kernels
-$ iopipe list
-
-# Fetch response and process it with com.example.SomeScript
-$ iopipe --debug exec http://localhost/some-request com.example.SomeScript
-
-# Fetch response and convert it with SomeScript, sending the result to otherhost
-$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
-                      http://otherhost/request
-
-# Fetch response and convert it with SomeScript, send that result to otherhost,
-# & converting the response with the script ResponseScript
-$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
-                      http://otherhost/request some.example.ResponseScript
-
-# Export an NPM module:
-$ iopipe export --name my-module-name http://localhost/some-request com.example.SomeScript
-```
-
 ### NodeJS SDK:
 
 The NodeJS SDK provides a generic callback chaining mechanism which allows
 mixing HTTP(S) requests/POSTs, function calls, and kernels. Callbacks
 receive the return of the previous function call or HTTP body.
 
+The callback variable received by a function is *also* an AWS Lambda-compatible
+"context" object. Because of this, you can chain standard callback-based NodeJS
+functions, and functions written for AWS Lambda.
+
 ```javascript
 var iopipe = require("iopipe")()
 
-// Where com.example.SomeScript is present in .iopipe/filter_cache/
+/* Get HTTP data, process it with SomeScript, and POST the results.
+   Note that com.example.SomeScript would be present in .iopipe/filter_cache/ */
 iopipe.exec("http://localhost/get-request",
             "com.example.SomeScript",
             "http://otherhost.post")
@@ -89,6 +52,26 @@ f()
 var echo = require("iopipe-echo")
 var f = iopipe.define(echo, console.log)
 f("hello world")
+
+/* Create an AWS Lambda function from any NodeJS function /w callback.
+   The callback becomes the equivilent of a done or success call on AWS. */
+export.handler = iopipe.define(function(event, callback) {
+  console.log(event)
+  callback()
+})
+
+/* Of course, this method chaining also works for creating AWS Lambda code.
+   This example will fetch HTTP data from the URL in the event's 'url' key
+   and return a SHA-256 of the retrieved content. */
+var crypto = require("crypto")
+export.handler = iopipe.define(iopipe.property("url"),
+                               iopipe.fetch,
+                               (event, callback) => {
+                                  callback(crypto
+                                           .createHash('sha256')
+                                           .update(event)
+                                           .digest('hex'))
+                               })
 ```
 
 For more information on using the NodeJS SDK, please refer to its documentation:
@@ -114,11 +97,56 @@ module.exports = function(input, context) {
 
 Functions should expect a "context" parameter which may be called
 directly as a callback, but also offers the methods 'done', 'success',
-and 'fail'. Users needing, for any reason, to create a context may
-call iopipe.create_context(callback).
+and 'fail'. Users needing, for any reason, to create a context manually
+may call iopipe.create_context(callback).
 
 For more on writing filters see:
 ***https://github.com/iopipe/iopipe/blob/master/docs/kernels.md***
+
+### CLI
+
+A Go-based CLI exists to create and export npm modules, share code,
+and provide runtime of magnetic kernels.
+
+Download the [latest binary release](https://github.com/iopipe/iopipe/releases) and chmod 755 the file.
+
+Building from source? See [Build & Install from source](#build--install-from-source).
+
+Alternatively, download & alias our Docker image:
+
+```bash
+$ docker pull iopipe/iopipe:trunk
+$ docker run --name iopipe-data iopipe/iopipe:trunk
+$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
+$ iopipe --help
+```
+
+OS-specific packages are forthcoming.
+
+### Command-line Examples
+
+```sh
+# Import a kernel and name it com.example.SomeScript
+$ iopipe import --name com.example.SomeScript - <<<'input'
+
+# List kernels
+$ iopipe list
+
+# Fetch response and process it with com.example.SomeScript
+$ iopipe --debug exec http://localhost/some-request com.example.SomeScript
+
+# Fetch response and convert it with SomeScript, sending the result to otherhost
+$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
+                      http://otherhost/request
+
+# Fetch response and convert it with SomeScript, send that result to otherhost,
+# & converting the response with the script ResponseScript
+$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
+                      http://otherhost/request some.example.ResponseScript
+
+# Export an NPM module:
+$ iopipe export --name my-module-name http://localhost/some-request com.example.SomeScript
+```
 
 ---------------------------------------
 Build & Install from source
