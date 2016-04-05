@@ -74,6 +74,37 @@ export.handler = iopipe.define(iopipe.property("url"),
                                })
 ```
 
+### AWS Lambda Client
+
+IOpipe also acts as an AWS Lambda Client where a Lambda function may
+be specified by its URN and included in the execution chain:
+
+```javascript
+var iopipe = require("iopipe")()
+var iopipe_aws = require("iopipe")(
+  exec_driver: 'aws'
+  exec_driver_opts: {
+    region: 'us-west-1',
+    access_key: 'itsasecrettoeverybody',
+    secret_key: 'itsasecrettoeverybody'
+  }
+)
+var crypto = require("crypto")
+
+export.handler = iopipe_aws.define("urn:somefunction",
+                                   "urn:anotherfunction",
+                                   iopipe.property("property-of-result"),
+                                   iopipe.fetch, # fetch that as a URL
+                                   (event, callback) => {
+                                      callback(JSON.parse(event))
+                                   },
+                                   iopipe.map(
+                                     iopipe_aws.define(
+                                       "urn:spawn_this_on_aws_for_each_value_in_parallel"
+                                     )
+                                   ))
+```
+
 For more information on using the NodeJS SDK, please refer to its documentation:
 ***https://github.com/iopipe/iopipe/blob/master/docs/nodejs.md***
 
