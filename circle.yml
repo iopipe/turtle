@@ -4,8 +4,6 @@ test:
     - go get github.com/mattn/goveralls
     - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
   override:
-    - go test -v -cover -race -coverprofile=$HOME/coverage.out
     - ./node_modules/.bin/istanbul cover jasmine
   post:
-    - $HOME/.go_workspace/bin/goveralls -coverprofile=$HOME/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
     - $HOME/.go_workspace/bin/goveralls -gocovdata=./coverage/coverage.json -service=circle-ci -repotoken=$COVERALLS_TOKEN

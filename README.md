@@ -143,65 +143,8 @@ For more on writing filters see:
 A Go-based CLI exists to create and export npm modules, share code,
 and provide runtime of magnetic kernels.
 
-Download the [latest binary release](https://github.com/iopipe/iopipe/releases) and chmod 755 the file.
+Find this tool in the [IOpipe-Golang repo](https://github.com/iopipe/iopipe-golang).
 
-Building from source? See [Build & Install from source](#build--install-from-source).
-
-Alternatively, download & alias our Docker image:
-
-```bash
-$ docker pull iopipe/iopipe:trunk
-$ docker run --name iopipe-data iopipe/iopipe:trunk
-$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe/iopipe:trunk'" | tee -a ~/.bashrc)
-$ iopipe --help
-```
-
-OS-specific packages are forthcoming.
-
-### Command-line Examples
-
-```sh
-# Import a kernel and name it com.example.SomeScript
-$ iopipe import --name com.example.SomeScript - <<<'input'
-
-# List kernels
-$ iopipe list
-
-# Fetch response and process it with com.example.SomeScript
-$ iopipe --debug exec http://localhost/some-request com.example.SomeScript
-
-# Fetch response and convert it with SomeScript, sending the result to otherhost
-$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
-                      http://otherhost/request
-
-# Fetch response and convert it with SomeScript, send that result to otherhost,
-# & converting the response with the script ResponseScript
-$ iopipe --debug exec http://localhost/some-request com.example.SomeScript \
-                      http://otherhost/request some.example.ResponseScript
-
-# Export an NPM module:
-$ iopipe export --name my-module-name http://localhost/some-request com.example.SomeScript
-```
-
----------------------------------------
-Build & Install from source
----------------------------------------
-
-With a functioning golang 1.5 development environment:
-
-```bash
-$ go build
-$ ./iopipe --help
-```
-
-Alternatively use Docker to build & deploy:
-
-```bash
-$ docker build -t iopipe-dev .
-$ docker run --name iopipe-data iopipe-dev
-$ eval $(echo "alias iopipe='docker run --rm --volumes-from iopipe-data iopipe-dev'" | tee -a ~/.bashrc)
-$ iopipe --help
-```
 ---------------------------------------
 Security
 ---------------------------------------
