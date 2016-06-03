@@ -35,7 +35,7 @@ var path = require('path')
 
 var local_driver = require('./exec_drivers/local/index.js')
 
-var USERAGENT = "iopipe/0.0.5"
+var USERAGENT = "iopipe/0.0.6"
 
 /**
    @description
