@@ -1,7 +1,7 @@
 {
   "name": "iopipe",
   "private": false,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "iopipe sdk",
   "author": "Eric Windisch",
   "files": [
@@ -12,7 +12,9 @@
     "flow",
     "waterfall",
     "async",
-    "functional"
+    "functional",
+    "serverless",
+    "aws-lambda"
   ],
   "dependencies": {
     "aws-sdk": "",
