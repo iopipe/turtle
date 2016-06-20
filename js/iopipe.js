@@ -121,22 +121,9 @@ function httpCallback(u, context) {
 }
 
 IOpipe.prototype.make_context = function(done) {
-  var mkctx = function() {
-    return function() {
-      if (arguments.length === 1 || arguments[0] == null) {
-        var args = [].slice.call(arguments)
-        return done.apply(this, args)
-      }
-      var err = arguments[1]
-      if (err != null) {
-        contextFail(err)
-      }
-    }
-  }
-  var ctx = mkctx()
-  ctx.done = mkctx()
+  var ctx = done
+  ctx.done = done
   ctx.fail = function(failure) {
-    console.log("FAIL: " + failure)
     throw failure
   }
   ctx.succeed = function(result) {
@@ -163,40 +150,54 @@ IOpipe.prototype.make_context = function(done) {
    @param {...(string|function)} kernel - Kernels specified as functions, scripts, or HTTP endpoints.
 */
 IOpipe.prototype.define = function() {
-  var callbackList = []
-  var done = function() { };
-
-  for (var i = arguments.length - 1; i > -1; i--) {
-    var arg = arguments[i];
-
-    var context = this.make_context(done)
-
-    if (typeof arg === "function") {
-      done = funcCallback(arg, context)
-    } else if (typeof(arg) === "string") {
-      var u = url.parse(arg);
-
-      if (u.protocol === 'http:' || u.protocol === 'https:') {
-        var server = u.hostname
-        done = httpCallback(u, context)
-      } else {
-        done = this._exec_driver.invoke({ id: arg }, context)
-      }
-    } else {
-      throw new Error("ERROR: unknown argument: " + arg)
-    }
-  }
-
   /* We return a function that executes the pipeline,
      if arguments are supplied, the first is input, and the remainder
      are callbacks. */
   var iopipe = this
-  return function() { 
-    var l = [].slice.call(arguments)
-    if (l.length > 1) {
-      l[1] = iopipe.make_context(l[1])
+  var defargs = [].slice.call(arguments)
+  var aws_context = null
+
+  return function() {
+    var done = function(e) { return e };
+
+    /* support callback to function returned by define()
+     * i.e. define(f1)(data, f2) ~= f2(f1(data)) */
+    var largs = [].slice.call(arguments)
+    if (largs.length > 1) {
+      aws_context = largs[1]
+      /* check for awsRequestId to detect Lambda */
+      done = function (e) {
+        if ('awsRequestId' in aws_context) {
+          aws_context.succeed(e)
+        } else {
+          largs[1](e)
+        }
+      }
     }
-    return done.apply(this, l)
+
+    for (var i = defargs.length - 1; i > -1; i--) {
+      var arg = defargs[i];
+
+      var context = iopipe.make_context(done)
+
+      if (typeof arg === "function") {
+        done = funcCallback(arg, context)
+      } else if (typeof(arg) === "string") {
+        var u = url.parse(arg);
+
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          var server = u.hostname
+          done = httpCallback(u, context)
+        } else {
+          done = this._exec_driver.invoke({ id: arg }, context)
+        }
+      } else {
+        throw new Error("ERROR: unknown argument: " + arg)
+      }
+    }
+
+    // Call function with input data.
+    done(largs[0])
   }
 }
 

@@ -41,11 +41,16 @@ describe("defined-function", function() {
   })
   it("passes result to callback", function(done) {
     var input = 2
-    var expected = 3
-    var fun = iopipe.define(function(i, ctx) {
-      ctx.done(i + 1)
-    })
-    fun(input, function(i) { 
+    var expected = 4
+    var fun = iopipe.define(
+      function(i, ctx) {
+        ctx(i + 1)
+      },
+      function(i, ctx) {
+        ctx(i + 1)
+      }
+    )
+    fun(input, function(i) {
       expect(i).toEqual(expected)
       done()
     })
