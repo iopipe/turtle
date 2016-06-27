@@ -27,10 +27,10 @@
   },
   "bugs": "https://github.com/iopipe/iopipe/issues",
   "devDependencies": {
-    "jasmine": "",
-    "istanbul": ""
+    "istanbul": "^0.4.4",
+    "jasmine": "^2.4.1"
   },
   "scripts": {
-    "test": "./node_modules/.bin/istanbul cover jasmine"
+    "test": "istanbul cover jasmine"
   }
 }
