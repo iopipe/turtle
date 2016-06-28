@@ -5,85 +5,117 @@ IOpipe
 Apache 2.0 licensed.
 
 IOpipe is a toolkit for building and orchestrating event-driven and
-serverless applications. These apps may run *locally* or in the cloud
-via AWS Lambda, Google Cloud Functions, or Azure Functions.
+serverless applications. These apps may run anywhere, either locally or,
+via execution drivers, in the cloud.
+
+Execution drivers exist for:
+
+ - AWS Lambda
+
+Drivers are planned (or in development) for:
+
+ - Google Cloud Functions
+ - Azure Functions
+ - Docker (Engine & Swarm)
 
 IOpipe can:
 
- * Chain AWS Lambda Functions and local functions
- * Convert NodeJS functions into serverless functions
- * Perform GET and POST HTTP requests
- * Parallelize data into serverless workers.
+ * Chain AWS Lambda Functions and local functions.
+ * Convert NodeJS functions into serverless functions.
+ * Compose applications with HTTP APIs.
+ * Parallelize data into serverless workers (scatter & gather).
 
-We call our serverless functions "kernels".  Kernels take and transform
-input and communicate over the networking, operating in a fashion to
-Unix pipes. A kernel may receive input or send output to/from
-web service requests, functions, or local applications.
+# CLI
 
+Use the [IOpipe CLI](https://github.com/iopipe/iopipe-golang) to create and
+export npm modules, share code, & provide runtime of magnetic functions.
 
----------------------------------------
-Usage
----------------------------------------
+Find, download, and/or contribute to this tool in the [CLI repo](https://github.com/iopipe/iopipe-golang).
+
+# SDK
 
 ### NodeJS SDK:
 
 The NodeJS SDK provides a generic callback chaining mechanism which allows
-mixing HTTP(S) requests/POSTs, function calls, and kernels. Callbacks
+mixing HTTP(S) requests/POSTs, and function calls. Callbacks
 receive the return of the previous function call or HTTP body.
 
-The callback variable received by a function is *also* an AWS Lambda-compatible
+The callback variable received by a function is also an AWS Lambda-compatible
 "context" object. Because of this, you can chain standard callback-based NodeJS
 functions, and functions written for AWS Lambda.
 
 ```javascript
+/* Create a Lambda function which increments event.key by 1. */
 var iopipe = require("iopipe")()
 
-/* Get HTTP data, process it with SomeScript, and POST the results.
-   Note that com.example.SomeScript would be present in .iopipe/filter_cache/ */
-iopipe.exec("http://localhost/get-request",
-            "com.example.SomeScript",
-            "http://otherhost.post")
-
-// Users may chain functions and HTTP requests.
-iopipe.exec(function(_, callback) { callback("something") },
-            function(arg, callback) { callback(arg) },
-            "http://otherhost.post",
-            your_callback)
-
-// A function may also be returned then executed later.
-var f = iopipe.define("http://fetch", "https://post")
-f()
-
-// A defined function also accepts parameters
-var echo = require("iopipe-echo")
-var f = iopipe.define(echo, console.log)
-f("hello world")
-
-/* Create an AWS Lambda function from any NodeJS function /w callback.
-   The callback becomes the equivilent of a done or success call on AWS. */
-export.handler = iopipe.define(function(event, callback) {
-  console.log(event)
-  callback()
-})
-
-/* Of course, this method chaining also works for creating AWS Lambda code.
-   This example will fetch HTTP data from the URL in the event's 'url' key
-   and return a SHA-256 of the retrieved content. */
-var crypto = require("crypto")
-export.handler = iopipe.define(iopipe.property("url"),
-                               iopipe.fetch,
-                               (event, callback) => {
-                                  callback(crypto
-                                           .createHash('sha256')
-                                           .update(event)
-                                           .digest('hex'))
-                               })
+exports.handle = iopipe.define(
+  (event, context) => {
+    context.succeed(event.key + 1)
+  }
+)
 ```
 
-### AWS Lambda Client
+#### Context argument
 
-IOpipe also acts as an AWS Lambda Client where a Lambda function may
-be specified by its URN and included in the execution chain:
+The context argument operates as both a callback and
+an object with several methods, similar to the same
+argument passed to AWS Lambda functions.
+
+Developers may call `context()` directly, with its argument
+passed as the event to the next function, or may call its
+methods.
+
+Context Methods:
+
+ - context.done(err, data)
+ - context.succeed(data)
+ - context.fail(err)
+
+
+Example of using context.fail to pass errors:
+
+```javascript
+// Create a Lambda function which increments event.key by 1.
+var iopipe = require("iopipe")()
+
+exports.handle = iopipe.define(
+  (event, context) => {
+    try {
+      throw "Ford, you're turning into a penguin. Stop it!"
+    }
+    catch (err) {
+      context.fail(err)
+    }
+  }
+)
+```
+
+#### HTTP endpoints as "functions"
+
+```javascript
+/* Lambda function which fetches data from a URL, then performs a POST to another. */
+exports.handle = iopipe.define("http://localhost/get-data",
+														   "http://localhost/post-data")
+```
+
+```javascript
+// You can chain HTTP requests & other functions.
+exports.handle = iopipe.define(
+  "http://localhost/get-data",
+  (data, callback) => {
+    console.log("Fetched data: " + data)
+  }
+)
+```
+
+#### Scatter & Gather
+
+IOpipe also acts as a client to serverless infrastructure allowing
+the use of scatter & gather patterns such as map-reduce.
+
+Below we initialize an AWS Lambda Client where a Lambda function may
+be specified by its Amazon [URN](https://en.wikipedia.org/wiki/Uniform_Resource_Name)
+and included in the execution chain:
 
 ```javascript
 var iopipe = require("iopipe")()
@@ -97,10 +129,10 @@ var iopipe_aws = require("iopipe")(
 )
 var crypto = require("crypto")
 
-export.handler = iopipe_aws.define("urn:somefunction",
-                                   "urn:anotherfunction",
+export.handler = iopipe_aws.define("urn:someLambdaFunction",
+                                   "urn:anotherLambdaFunction",
                                    iopipe.property("property-of-result"),
-                                   iopipe.fetch, # fetch that as a URL
+                                   iopipe.fetch, // fetch that as a URL
                                    (event, callback) => {
                                       callback(JSON.parse(event))
                                    },
@@ -114,53 +146,25 @@ export.handler = iopipe_aws.define("urn:somefunction",
 For more information on using the NodeJS SDK, please refer to its documentation:
 ***https://github.com/iopipe/iopipe/blob/master/docs/nodejs.md***
 
----------------------------------------
-Kernel functions
----------------------------------------
+### Go SDK:
 
-Requests and responses are translated using kernels, and
-may pipe to other kernels, or to/from web service endpoints.
+Bundled with the [IOpipe CLI](https://github.com/iopipe/iopipe-golang) is
+a Go SDK, still in early development.
 
-Kernels simply receive request or response data and output
-translated request or response data.
-
-Example:
-
-```javascript
-module.exports = function(input, context) {
-  context.done("I'm doing something with input: {0}".format(input))
-}
-```
-
-Functions should expect a "context" parameter which may be called
-directly as a callback, but also offers the methods 'done', 'success',
-and 'fail'. Users needing, for any reason, to create a context manually
-may call iopipe.create_context(callback).
-
-For more on writing filters see:
-***https://github.com/iopipe/iopipe/blob/master/docs/kernels.md***
-
-### CLI
-
-A Go-based CLI exists to create and export npm modules, share code,
-and provide runtime of magnetic kernels.
-
-Find this tool in the [IOpipe-Golang repo](https://github.com/iopipe/iopipe-golang).
-
----------------------------------------
+---------
 Security
----------------------------------------
+---------
 
-Kernels are executed in individual virtual machines
+Applications are executed in individual virtual machines
 whenever allowed by the executing environment.
 The definition of a virtual machine here is lax,
 such that it may describe a Javascript VM,
 a Linux container, or a hardware-assisted x86
 virtual machine. Users should exercise caution
-when running community created kernels.
+when running community contributed code.
 
 It is a project priority to make fetching, publishing,
-and execution of kernels secure for a
+and execution of functions secure for a
 production-ready 1.0.0 release.
 
 Modules are fetched and stored using sha256 hashes,
@@ -171,8 +175,8 @@ state-of-the-art software assurance.
 
 Contact security@iopipe.com for questions.
 
----------------------------------------
+-------
 LICENSE
----------------------------------------
+-------
 
-Apache 2.0
+Apache 2.0. Copyright 2016, IOpipe, Inc.
