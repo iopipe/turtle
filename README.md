@@ -123,16 +123,39 @@ exports.handle = iopipe.define(
 
 #### HTTP endpoints as "functions"
 
-```javascript
-/* Lambda function which fetches data from a URL, then performs a POST to another. */
-exports.handle = iopipe.define("http://localhost/get-data",
-														   "http://localhost/post-data")
-```
+The first argument to `define`, if a URL, is fetched via an HTTP get
+request. Any URL string specified elsewhere in the argument list to
+`define` is sent a POST rqeuest.
+
+This first example fetches data from a URL, then performs a POST request
+to another.
 
 ```javascript
-// You can chain HTTP requests & other functions.
+exports.handle = iopipe.define("http://localhost/get-data",
+                               "http://localhost/post-data")
+```
+
+It's possible to use IOpipe to fetch from a URL and perform data
+transformations via composition as follows:
+
+```javascript
 exports.handle = iopipe.define(
   "http://localhost/get-data",
+  (data, callback) => {
+    console.log("Fetched data: " + data)
+  }
+)
+```
+
+Often, users will need to use IOpipe to fetch a URL somewhere in
+the middle of a composition and will need to use functional tools
+such as `iopipe.fetch`. The following example also uses
+`iopipe.property`, which extracts a key from an ECMAscript `Object`:
+
+```javascript
+exports.handle = iopipe.define(
+  iopipe.property("url"),
+  iopipe.fetch,
   (data, callback) => {
     console.log("Fetched data: " + data)
   }
