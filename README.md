@@ -29,6 +29,8 @@ IOpipe can:
 
 Use the [IOpipe CLI](https://github.com/iopipe/iopipe-golang) to create and
 export npm modules, share code, & provide runtime of magnetic functions.
+The CLI is still in early development, with our NodeJS SDK being more
+mature.
 
 Find, download, and/or contribute to this tool in the [CLI repo](https://github.com/iopipe/iopipe-golang).
 
@@ -43,6 +45,20 @@ receive the return of the previous function call or HTTP body.
 The callback variable received by a function is also an AWS Lambda-compatible
 "context" object. Because of this, you can chain standard callback-based NodeJS
 functions, and functions written for AWS Lambda.
+
+#### Installation
+
+Installation of the NodeJS module is easy via npm:
+
+```
+$ npm install iopipe
+```
+
+Our CLI is still in early development and may be found on the releases
+page, with further instructions in the [CLI
+repo](https://github.com/iopipe/iopipe-golang).
+
+#### Basic usage:
 
 ```javascript
 /* Create a Lambda function which returns event.key + 1. */
