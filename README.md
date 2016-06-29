@@ -45,7 +45,7 @@ The callback variable received by a function is also an AWS Lambda-compatible
 functions, and functions written for AWS Lambda.
 
 ```javascript
-/* Create a Lambda function which increments event.key by 1. */
+/* Create a Lambda function which returns event.key + 1. */
 var iopipe = require("iopipe")()
 
 exports.handle = iopipe.define(
@@ -75,7 +75,6 @@ Context Methods:
 Example of using context.fail to pass errors:
 
 ```javascript
-// Create a Lambda function which increments event.key by 1.
 var iopipe = require("iopipe")()
 
 exports.handle = iopipe.define(
@@ -87,6 +86,38 @@ exports.handle = iopipe.define(
       context.fail(err)
     }
   }
+)
+```
+
+#### Function Composition
+
+IOpipe supports the composition of functions, HTTP endpoints,
+and modules, taken from functional-programming and flow-based
+programming models. This simplifies code-reuse and works as
+glue between algorithms.
+
+There is (some) compatibility with [Rambda](http://ramdajs.com) for
+function composition & developing functional applications.
+
+By using function composition, you will gain additional insights
+and increased granularity when utilizing (upcoming) telementry features.
+
+Example:
+
+```javascript
+/* Return event.int + 1, square the result,
+   print, then return the result. */
+exports.handle = iopipe.define(
+  (event, context) => {
+    context(event.int + 1)
+	},
+  (event, context) => {
+    context(Math.pow(event, 2))
+	},
+  (event, context) => {
+    console.log(event)
+    context(event)
+	}
 )
 ```
 
