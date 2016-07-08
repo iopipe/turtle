@@ -28,7 +28,9 @@
   "bugs": "https://github.com/iopipe/iopipe/issues",
   "devDependencies": {
     "istanbul": "^0.4.4",
-    "jasmine": "^2.4.1"
+    "jasmine": "^2.4.1",
+    "sinon": "",
+    "bluebird": ""
   },
   "scripts": {
     "test": "istanbul cover jasmine"

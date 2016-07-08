@@ -32,10 +32,12 @@ var url = require('url')
 var request = require("request")
 var vm = require('vm')
 var path = require('path')
+var crypto = require('crypto')
 
 var local_driver = require('./exec_drivers/local/index.js')
 
-var USERAGENT = "iopipe/0.0.6"
+var USERAGENT = "iopipe/0.0.5"
+var REGISTRY_HOST = "https://index-api.iopipe.com/v0/"
 
 /**
    @description
@@ -134,6 +136,37 @@ IOpipe.prototype.make_context = function(done) {
   return ctx
 }
 
+IOpipe.prototype.post_function = function(data, callback) {
+  IOpipe.prototype.post_json(REGISTRY_HOST + '/filters/')(data, iopipe.make_context(callback))
+}
+
+IOpipe.prototype.fetch_function = function(id, callback) {
+  var iopipe = IOpipe.prototype
+  iopipe.fetch(REGISTRY_HOST + '/filters/' + id, function(func) {
+    const hash = crypto.createHash('sha256');
+    hash.update(func)
+    var hex = hash.digest('hex')
+    if (hex !== id) {
+      throw "Error"
+    }
+    callback(input)
+  })
+}
+
+IOpipe.prototype.pull_function = function(id, callback) {
+  var iopipe = this
+  this.fetch_function(id, function(func) {
+    iopipe._exec_driver.CreateFunction(func, callback)
+  })
+}
+
+IOpipe.prototype.push_function = function(id, callback) {
+  var iopipe = this
+  this._exec_driver.GetFunction(id, function(func) {
+    iopipe.post_function(func, callback)
+  })
+}
+
 /**
    @description
    Defines a pipeline, returning a function.
@@ -192,7 +225,7 @@ IOpipe.prototype.define = function() {
           done = this._exec_driver.invoke({ id: arg }, context)
         }
       } else {
-        throw new Error("ERROR: unknown argument: " + arg)
+        done = this._exec_driver.invoke({ id: arg }, IOpipe.prototype.make_context(context))
       }
     }
 
@@ -393,19 +426,67 @@ IOpipe.prototype.reduce = function(fun) {
 */
 IOpipe.prototype.fetch = function(u) {
   return function(input, done) {
-    request.get({url: url.format(u), strictSSL: true,
-                 headers: {
-                   "User-Agent": USERAGENT
-                 }
-    }, function(error, response, body) {
-      if (error || response.statusCode != 200) {
-        throw "HTTP response != 200"
+    request.get(
+      {
+        url: url.format(u),
+        strictSSL: true,
+        headers: {
+          "User-Agent": USERAGENT
+        }
+      },
+      function(error, response, body) {
+        if (error || response.statusCode != 200) {
+          throw "HTTP response != 200"
+        }
+        done(body)
       }
-      done(body)
-    })
+    )
   }
 }
 
+/**
+  Pipe into this function parameters for Node's `request` library
+  to perform a post, with the POST callback handled appropriately,
+  processing success and failure using the context variable.
+*/
+IOpipe.prototype.post = function(input, context) {
+  request.post(
+    input,
+    function(error, response, body) {
+      if (error || response.statusCode != 200) {
+        context.fail("HTTP response != 200")
+      }
+      context.succeed(body)
+    }
+  )
+}
+
+/**
+  Return a function which posts to URL. The returned function
+  accepts an input event which is stringified to JSON and posted
+  as type `application/json`.
+*/
+IOpipe.prototype.post_json = function(u) {
+  return function(input, context) {
+    request.post(
+      {
+        url: url.format(u),
+        body: JSON.stringify(input),
+        strictSSL: true,
+        headers: {
+          "User-Agent": USERAGENT,
+          "Content-Type": "application/json"
+        }
+      },
+      function(error, response, body) {
+        if (error || response.statusCode != 200) {
+          context.fail("HTTP response != 200")
+        }
+        context.succeed(body)
+      }
+    )
+  }
+}
 
 /**
   Creates a new function accepting a callback around a function
