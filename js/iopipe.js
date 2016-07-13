@@ -33,7 +33,8 @@ var request = require("request")
 var vm = require('vm')
 var path = require('path')
 
-var local_driver = require('./exec_drivers/local/index.js')
+var local_driver = require('./exec_drivers/local')
+var iopipe_agent = require('./lib/agent')
 
 var USERAGENT = "iopipe/0.0.6"
 
@@ -54,6 +55,9 @@ var USERAGENT = "iopipe/0.0.6"
        region: 'us-west-1',
        access_key: 'itsasecrettoeverybody',
        secret_key: 'itsasecrettoeverybody'
+     },
+     metrics_opts: {
+       client_id: "your_client_id"
      }
    })
    ```
@@ -61,6 +65,9 @@ var USERAGENT = "iopipe/0.0.6"
    @param object options - Runtime options.
 */
 function IOpipe(options) {
+  var metrics_opts = {}
+  this._metrics_agent = iopipe_agent(metrics_opts)
+
   var _exec_driver = 'local'
   if (options && "exec_driver" in options) {
     _exec_driver = options.exec_driver

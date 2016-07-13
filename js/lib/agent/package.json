@@ -1,0 +1,33 @@
+{
+  "name": "iopipe-agent",
+  "version": "0.0.5",
+  "description": "IOpipe Serverless Metrics & Tracing Agent",
+  "main": "index.js",
+  "scripts": {
+    "test": "istanbul cover jasmine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iopipe/iopipe-agent.git"
+  },
+  "keywords": [
+    "serverless",
+    "agent",
+    "analytics",
+    "metrics"
+  ],
+  "author": "Eric Windisch <eric@iopipe.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/iopipe/iopipe-agent/issues"
+  },
+  "homepage": "https://github.com/iopipe/iopipe-agent#readme",
+  "dependencies": {
+    "crypto": "0.0.3",
+    "request": "^2.72.0"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.4",
+    "jasmine": "^2.4.1"
+  }
+}
