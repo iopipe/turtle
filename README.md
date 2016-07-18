@@ -1,12 +1,12 @@
-IOpipe
+Turtle
 ---------------------------------------
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/iopipe/iopipe)
 
 Apache 2.0 licensed.
 
-IOpipe is a toolkit for building and orchestrating event-driven and
+Turtle is a toolkit for building and orchestrating event-driven and
 serverless applications. These apps may run anywhere, either locally or,
-via execution drivers, in the cloud.
+via execution drivers, in the cloud. It's turtles all the way down.
 
 Execution drivers exist for:
 
@@ -18,7 +18,7 @@ Drivers are planned (or in development) for:
  - Azure Functions
  - Docker (Engine & Swarm)
 
-IOpipe can:
+Turtle can:
 
  * Chain AWS Lambda Functions and local functions.
  * Convert NodeJS functions into serverless functions.
@@ -27,12 +27,12 @@ IOpipe can:
 
 # CLI
 
-Use the [IOpipe CLI](https://github.com/iopipe/iopipe-golang) to create and
+Use the [Turtle CLI](https://github.com/iopipe/turtle-golang) to create and
 export npm modules, share code, & provide runtime of magnetic functions.
 The CLI is still in early development, with our NodeJS SDK being more
 mature.
 
-Find, download, and/or contribute to this tool in the [CLI repo](https://github.com/iopipe/iopipe-golang).
+Find, download, and/or contribute to this tool in the [CLI repo](https://github.com/iopipe/turtle-golang).
 
 # SDK
 
@@ -51,7 +51,7 @@ functions, and functions written for AWS Lambda.
 Installation of the NodeJS module is easy via npm:
 
 ```
-$ npm install iopipe
+$ npm install @iopipe/turtle
 ```
 
 Our CLI is still in early development and may be found on the releases
@@ -62,9 +62,9 @@ repo](https://github.com/iopipe/iopipe-golang).
 
 ```javascript
 /* Create a Lambda function which returns event.key + 1. */
-var iopipe = require("iopipe")()
+var turtle = require("@iopipe/turtle")()
 
-exports.handle = iopipe.define(
+exports.handle = turtle.define(
   (event, context) => {
     context.succeed(event.key + 1)
   }
@@ -91,9 +91,9 @@ Context Methods:
 Example of using context.fail to pass errors:
 
 ```javascript
-var iopipe = require("iopipe")()
+var turtle = require("@iopipe/turtle")()
 
-exports.handle = iopipe.define(
+exports.handle = turtle.define(
   (event, context) => {
     try {
       throw "Ford, you're turning into a penguin. Stop it!"
@@ -107,7 +107,7 @@ exports.handle = iopipe.define(
 
 #### Function Composition
 
-IOpipe supports the composition of functions, HTTP endpoints,
+Turtle supports the composition of functions, HTTP endpoints,
 and modules, taken from functional-programming and flow-based
 programming models. This simplifies code-reuse and works as
 glue between algorithms.
@@ -123,7 +123,7 @@ Example:
 ```javascript
 /* Return event.int + 1, square the result,
    print, then return the result. */
-exports.handle = iopipe.define(
+exports.handle = turtle.define(
   (event, context) => {
     context(event.int + 1)
 	},
@@ -147,15 +147,15 @@ This first example fetches data from a URL, then performs a POST request
 to another.
 
 ```javascript
-exports.handle = iopipe.define("http://localhost/get-data",
+exports.handle = turtle.define("http://localhost/get-data",
                                "http://localhost/post-data")
 ```
 
-It's possible to use IOpipe to fetch from a URL and perform data
+It's possible to use Turtle to fetch from a URL and perform data
 transformations via composition as follows:
 
 ```javascript
-exports.handle = iopipe.define(
+exports.handle = turtle.define(
   "http://localhost/get-data",
   (data, callback) => {
     console.log("Fetched data: " + data)
@@ -163,15 +163,15 @@ exports.handle = iopipe.define(
 )
 ```
 
-Often, users will need to use IOpipe to fetch a URL somewhere in
+Often, users will need to use Turtle to fetch a URL somewhere in
 the middle of a composition and will need to use functional tools
-such as `iopipe.fetch`. The following example also uses
-`iopipe.property`, which extracts a key from an ECMAscript `Object`:
+such as `turtle.fetch`. The following example also uses
+`turtle.property`, which extracts a key from an ECMAscript `Object`:
 
 ```javascript
-exports.handle = iopipe.define(
-  iopipe.property("url"),
-  iopipe.fetch,
+exports.handle = turtle.define(
+  turtle.property("url"),
+  turtle.fetch,
   (data, callback) => {
     console.log("Fetched data: " + data)
   }
@@ -180,7 +180,7 @@ exports.handle = iopipe.define(
 
 #### Scatter & Gather
 
-IOpipe also acts as a client to serverless infrastructure allowing
+Turtle also acts as a client to serverless infrastructure allowing
 the use of scatter & gather patterns such as map-reduce.
 
 Below we initialize an AWS Lambda Client where a Lambda function may
@@ -188,8 +188,8 @@ be specified by its Amazon [URN](https://en.wikipedia.org/wiki/Uniform_Resource_
 and included in the execution chain:
 
 ```javascript
-var iopipe = require("iopipe")()
-var iopipe_aws = require("iopipe")(
+var turtle = require("@iopipe/turtle")()
+var turtle_aws = require("@iopipe/turtle")(
   exec_driver: 'aws'
   exec_driver_opts: {
     region: 'us-west-1',
@@ -199,14 +199,14 @@ var iopipe_aws = require("iopipe")(
 )
 var crypto = require("crypto")
 
-export.handler = iopipe_aws.define("urn:someLambdaFunction",
+export.handler = turtle_aws.define("urn:someLambdaFunction",
                                    "urn:anotherLambdaFunction",
-                                   iopipe.property("property-of-result"),
-                                   iopipe.fetch, // fetch that as a URL
+                                   turtle.property("property-of-result"),
+                                   turtle.fetch, // fetch that as a URL
                                    (event, callback) => {
                                       callback(JSON.parse(event))
                                    },
-                                   iopipe.map(
+                                   turtle.map(
                                      iopipe_aws.define(
                                        "urn:spawn_this_on_aws_for_each_value_in_parallel"
                                      )
@@ -218,7 +218,7 @@ For more information on using the NodeJS SDK, please refer to its documentation:
 
 ### Go SDK:
 
-Bundled with the [IOpipe CLI](https://github.com/iopipe/iopipe-golang) is
+Bundled with the [Turtle CLI](https://github.com/iopipe/turtle-golang) is
 a Go SDK, still in early development.
 
 ---------
@@ -240,7 +240,7 @@ production-ready 1.0.0 release.
 Modules are fetched and stored using sha256 hashes,
 providing an advantage over module-hosting mechanisms
 which are based simply on a name and version. Future
-versions of IOpipe will likely implement TUF for
+versions of Turtle will likely implement TUF for
 state-of-the-art software assurance.
 
 Contact security@iopipe.com for questions.
@@ -249,4 +249,4 @@ Contact security@iopipe.com for questions.
 LICENSE
 -------
 
-Apache 2.0. Copyright 2016, IOpipe, Inc.
+Apache 2.0. Copyright 2016. IOpipe, Inc.

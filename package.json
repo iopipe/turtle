@@ -1,7 +1,7 @@
 {
-  "name": "iopipe",
+  "name": "@iopipe/turtle",
   "private": false,
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "iopipe sdk",
   "author": "Eric Windisch",
   "files": [
